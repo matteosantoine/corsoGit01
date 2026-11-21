@@ -1,5 +1,6 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
+import type { EditTextDeps } from "./handlers/editText";
 import type { ExtractDeps } from "./handlers/extract";
 import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
@@ -13,7 +14,7 @@ const need = (name: string): string => {
   return v;
 };
 
-export type AllDeps = Deps & ExtractDeps;
+export type AllDeps = Deps & ExtractDeps & EditTextDeps;
 let cached: AllDeps | undefined;
 
 /** Dipendenze reali, create una volta sola (identità gestita in Azure, `az login` in locale). */

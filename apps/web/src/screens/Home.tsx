@@ -3,9 +3,10 @@ import { microphoneErrorMessage, startRecording, type Recorder } from "../audio/
 import { toWav16kMono } from "../audio/convert";
 import { addToQueue, listQueue, removeFromQueue, type QueuedNote } from "../audio/queue";
 import { useOnline } from "../components/useOnline";
-import type { Impegno } from "@impegni/shared";
-import { extractNote, isApiConfigured, sendNote } from "../api/client";
+import { extractNote, isApiConfigured, sendNote, updateNoteText } from "../api/client";
 import { Review } from "../review/Review";
+import { addReview, removeForNote, replaceForNote, type ReviewEntry } from "../review/queue";
+import { TranscriptCard } from "../components/TranscriptCard";
 import { syncQueue } from "../audio/sync";
 
 const MAX_SECONDS = 5 * 60; // limite per nota: tiene il file sotto il massimo accettato dal server
@@ -21,9 +22,9 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedNote[]>([]);
-  const [heard, setHeard] = useState<string[]>([]);
+  const [heard, setHeard] = useState<{ noteId: string; text: string }[]>([]);
   const [info, setInfo] = useState<string | null>(null);
-  const [reviews, setReviews] = useState<Impegno[][]>([]);
+  const [reviews, setReviews] = useState<ReviewEntry[]>([]);
   const [thinking, setThinking] = useState(false);
   const [playing, setPlaying] = useState<{ id: string; url: string } | null>(null);
   const recorder = useRef<Recorder | null>(null);
@@ -35,11 +36,11 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
     if (!isApiConfigured || !navigator.onLine) return;
     const report = await syncQueue({ list: listQueue, remove: removeFromQueue, send: sendNote });
     if (report.sent.length) {
-      setHeard((h) => [...report.sent.map((s) => s.text), ...h]);
+      setHeard((h) => [...report.sent.map((s) => ({ noteId: s.noteId, text: s.text })), ...h]);
       setThinking(true);
       for (const sent of report.sent) {
         const r = await extractNote(sent.noteId);
-        if (r.kind === "ok") setReviews((cur) => [...cur, r.items]);
+        if (r.kind === "ok") setReviews((cur) => addReview(cur, sent.noteId, r.items));
         else if (r.kind === "error") setInfo(r.message);
         else setInfo("Non sono ancora riuscito a capire gli impegni. La nota è salvata: riprovo più tardi.");
       }
@@ -92,6 +93,27 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
     }
   }
 
+  /** Salva il testo corretto e rifà l'estrazione. Restituisce un messaggio d'errore, o null. */
+  async function correct(noteId: string, text: string): Promise<string | null> {
+    const saved = await updateNoteText(noteId, text);
+    if (saved.kind === "error") return saved.message;
+    if (saved.kind === "auth") return "Accesso scaduto. Esci e accedi di nuovo.";
+    if (saved.kind !== "ok") return "Non c'è connessione. Riprova tra poco.";
+    setHeard((h) => h.map((x) => (x.noteId === noteId ? { ...x, text } : x)));
+    setThinking(true);
+    setInfo(null);
+    const r = await extractNote(noteId);
+    setThinking(false);
+    if (r.kind === "ok") {
+      setReviews((cur) => (r.items.length ? replaceForNote(cur, noteId, r.items) : removeForNote(cur, noteId)));
+      if (!r.items.length) setInfo("Nel testo corretto non ho trovato impegni.");
+    } else {
+      setReviews((cur) => removeForNote(cur, noteId)); // quelli vecchi non valgono più
+      setInfo("Il testo è salvato, ma non sono riuscito a rifare gli impegni. Riprova a correggerlo tra poco.");
+    }
+    return null;
+  }
+
   async function discard(id: string) {
     if (playing?.id === id) setPlaying(null);
     await removeFromQueue(id);
@@ -116,7 +138,11 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
       )}
 
       {reviews.length > 0 ? (
-        <Review key={reviews.length} initial={reviews[0]} onDone={() => setReviews((cur) => cur.slice(1))} />
+        <Review
+          key={`${reviews[0].noteId}-${reviews[0].version}`}
+          initial={reviews[0].items}
+          onDone={() => setReviews((cur) => cur.slice(1))}
+        />
       ) : (
       <section className="center grow">
         {thinking && <p className="lead" role="status">Sto capendo gli impegni…</p>}
@@ -140,9 +166,11 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
       )}
 
       {heard.length > 0 && (
-        <section className="queue" aria-label="Note trascritte">
-          <h2>Ho scritto così</h2>
-          {heard.map((t, i) => <p className="heard" key={i}>{t}</p>)}
+        <section className="queue" aria-label="Il tuo vocale, scritto">
+          <h2>Il tuo vocale, scritto</h2>
+          {heard.map((h) => (
+            <TranscriptCard key={h.noteId} text={h.text} onSave={(t) => correct(h.noteId, t)} />
+          ))}
         </section>
       )}
 

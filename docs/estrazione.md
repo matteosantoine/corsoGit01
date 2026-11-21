@@ -8,6 +8,13 @@
    *Per quando è?* (Oggi / Domani / Dopodomani / calendario) → *A che ora?* (orari rapidi / selettore) →
    *Chi deve esserci?* (nomi, oppure "Nessuno, solo io").
 
+## Correggere il testo
+Sotto "Il tuo vocale, scritto" c'è il pulsante **Correggi il testo**. Si modifica il testo, poi
+**Salva e rifai gli impegni**: l'app salva la correzione (`PUT /api/notes/{id}/text`, max 4000 caratteri,
+solo sulla propria nota) e rifà l'estrazione sul testo corretto. Gli impegni e le risposte date prima su
+quella nota vengono scartati e le domande ripartono da zero. Il pulsante è disattivo finché il testo non
+cambia o se è vuoto. Se il server rifiuta la correzione, l'errore si vede e si resta in modifica.
+
 ## Dove sta cosa
 | Cosa | File |
 |---|---|
@@ -16,6 +23,7 @@
 | Ricontrollo date/ore e calcolo dei dati mancanti | `packages/shared/src/normalize.ts` |
 | Calendario dei prossimi giorni dato al modello | `packages/shared/src/dates.ts` |
 | Domande e risposte nell'app | `apps/web/src/review/` |
+| Correzione del testo (app / server) | `apps/web/src/components/TranscriptCard.tsx` / `apps/api/src/handlers/editText.ts` |
 | Casi di prova con frasi italiane | `apps/api/src/eval/cases.ts` |
 
 ## Scelte importanti

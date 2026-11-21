@@ -18,6 +18,8 @@ export interface NotesRepo {
   create(note: NoteDoc): Promise<void>;
   get(userId: string, id: string): Promise<NoteDoc | null>;
   saveItems(userId: string, id: string, items: Impegno[]): Promise<void>;
+  /** Sostituisce il testo (correzione dell'utente) e scarta gli impegni già estratti, ormai superati. */
+  updateText(userId: string, id: string, text: string): Promise<void>;
 }
 
 export function createCosmosNotes(opts: {
@@ -41,6 +43,13 @@ export function createCosmosNotes(opts: {
       if (!resource) throw new Error("nota non trovata");
       await item.replace({ ...resource, items, status: "elaborata" });
     },
+    async updateText(userId, id, text) {
+      const item = container.item(id, userId);
+      const { resource } = await item.read<NoteDoc>();
+      if (!resource) throw new Error("nota non trovata");
+      const { items: _scartati, ...rest } = resource;
+      await item.replace({ ...rest, text, status: "nuova" });
+    },
   };
 }
 
@@ -55,6 +64,13 @@ export function createMemoryNotes(): NotesRepo & { all: NoteDoc[] } {
       if (!n) throw new Error("nota non trovata");
       n.items = items;
       n.status = "elaborata";
+    },
+    async updateText(userId, id, text) {
+      const n = all.find((x) => x.id === id && x.userId === userId);
+      if (!n) throw new Error("nota non trovata");
+      n.text = text;
+      n.status = "nuova";
+      delete n.items;
     },
   };
 }
