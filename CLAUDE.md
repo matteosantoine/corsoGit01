@@ -8,3 +8,9 @@ Memoria del progetto.
 
 ## Note
 Le note di lavoro stanno nella cartella `memoria/`.
+
+## Progetto: app vocale "Impegni"
+- Monorepo npm: `apps/web` (PWA React+Vite+TS), `apps/api` (Azure Functions, dalla fase B), `packages/shared` (schemi zod), `infra` (Bicep).
+- Architettura e decisioni: `docs/proposta-architettura.md`. Solo Android e PC, niente iOS per ora.
+- Regole: audio mai conservato; log senza contenuti né dati personali; nessun segreto nel codice; nessun invito senza conferma dell'utente.
+- Verifica: `npm test && npm run typecheck && npm run build`.

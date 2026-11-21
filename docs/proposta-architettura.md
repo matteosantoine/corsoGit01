@@ -1,6 +1,6 @@
 # App vocale "Impegni" — Proposta di architettura
 
-Stato: **in attesa di approvazione**. Nessun codice scritto.
+Stato: **approvata** (Functions + Static Web Apps + Bicep; solo Android e PC). Fasi 0 e A completate.
 
 ## 1. Architettura
 
@@ -64,8 +64,7 @@ corsoGit01/
 │  ├─ registrazione-entra-id.md        # istruzioni passo-passo app + permessi Graph
 │  └─ costi-stimati.md
 ├─ infra/
-│  ├─ main.bicep
-│  ├─ modules/                         # swa, functions, cosmos, speech, openai, kv, insights
+│  ├─ main.bicep                       # tutte le risorse in un solo file
 │  └─ parameters.example.json
 ├─ apps/
 │  ├─ web/                             # PWA
