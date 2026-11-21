@@ -50,7 +50,7 @@ Stato: **approvata** (Functions + Static Web Apps + Bicep; solo Android e PC). F
 1. **Formato audio su iOS.** Safari registra in MP4/AAC, Android in WebM/Opus. Per evitare problemi con Speech, il client converte sempre in **WAV 16 kHz mono**. Una nota di 1 minuto pesa circa 2 MB.
 2. **Cancellazione audio anche in caso di errore.** Ordine fisso: trascrivi → salva il testo → il server conferma → il client cancella l'audio locale → solo dopo parte l'estrazione. Se l'estrazione fallisce, l'audio è già cancellato e il testo si può rielaborare.
 3. **Coda offline su iOS.** Safari può svuotare lo storage di una PWA non usata per settimane. Mostro sempre un avviso visibile "1 nota in attesa di invio".
-4. **Consenso amministratore.** I permessi Graph richiedono di solito il consenso dell'admin del tenant. L'accesso è ristretto al solo utente assegnato. La MFA è una policy di Conditional Access impostata dall'admin, non dal codice.
+4. **Consenso amministratore.** I permessi Graph richiedono di solito il consenso dell'admin del tenant. L'accesso è ristretto al solo utente assegnato. La MFA è impostata dall'admin, non dal codice (con licenza Business Basic: Impostazioni predefinite di sicurezza o MFA per utente).
 5. **Regioni.** Italy North non offre tutti i servizi. Tutto in **West Europe**, tranne Azure OpenAI in **Sweden Central** con deployment Standard regionale (verificato sul listino prezzi: per gpt-4o-mini non esiste il tier Data Zone e in West Europe c'è solo il globale). Nome e versione del modello da riconfermare al deploy.
 6. **Date relative.** Il modello riceve data, ora e fuso (Europe/Rome) correnti. Il backend ricontrolla le date: se una data risulta nel passato o incoerente, chiede conferma invece di indovinare.
 

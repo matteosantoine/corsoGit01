@@ -7,17 +7,18 @@ Data della verifica: 21/11/2026. Prezzi di listino (retail), IVA esclusa, in EUR
 **Circa 1-3 € al mese** con un uso normale. Quasi tutto è gratuito o a consumo; l'unica voce che
 si nota è la trascrizione audio. Non servono licenze aggiuntive oltre a quelle che l'agenzia ha già.
 
-## 2. Già incluso nelle licenze Microsoft 365 Business Premium (costo aggiuntivo: 0)
+## 2. Già incluso nella licenza Microsoft 365 Business Basic (costo aggiuntivo: 0)
 
 | Servizio | Per cosa |
 |---|---|
-| Outlook / Calendario | eventi e inviti ai partecipanti |
+| Outlook / Calendario (web e mobile) | eventi e inviti ai partecipanti |
 | Microsoft To Do | promemoria |
 | Teams | link riunione negli eventi |
-| Microsoft Entra ID (piano P1) + Accesso condizionale | login aziendale e MFA obbligatoria |
+| Microsoft Entra ID (livello gratuito) | login aziendale e registrazione dell'app |
+| MFA tramite "Impostazioni predefinite di sicurezza" | MFA obbligatoria (già attiva nel tenant). L'Accesso condizionale richiede Entra ID P1, non incluso in Basic e non necessario per l'app |
 | Microsoft Graph API | accesso a calendario, To Do, contatti (nessun costo per chiamata) |
 
-Copilot **non serve** e non è incluso: l'estrazione degli impegni la fa Azure OpenAI.
+Copilot **non serve** e non è incluso (né in Basic né in Premium): l'estrazione degli impegni la fa Azure OpenAI.
 
 ## 3. Servizi Azure da creare (sottoscrizione pay-as-you-go già esistente)
 

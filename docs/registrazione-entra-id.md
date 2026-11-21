@@ -36,8 +36,9 @@ l'utente può vedere una richiesta di approvazione.
 - **Assegnazione utente richiesta?** → **Sì**
 - *Utenti e gruppi* → assegna solo tuo padre (e te, per i test).
 
-La **MFA** è già obbligatoria nel tenant (Conditional Access): vale automaticamente anche per questa app.
-Verifica in *Protezione* → *Accesso condizionale* che la policy copra "Tutte le app cloud".
+La **MFA** è già obbligatoria nel tenant (con licenza Business Basic: Impostazioni predefinite di sicurezza o MFA per utente;
+l'Accesso condizionale richiede Entra ID P1 e non serve all'app). Vale automaticamente anche per questa app.
+Verifica in *Protezione* → *Autenticazione a più fattori* che l'utente risulti con MFA attiva.
 
 ## 5. Credenziale per il backend (flusso On-Behalf-Of, senza segreti)
 Il backend scambia il token dell'utente con un token Graph. Invece di un segreto
