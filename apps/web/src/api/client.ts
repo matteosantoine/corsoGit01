@@ -87,7 +87,9 @@ export async function updateNoteText(noteId: string, text: string): Promise<Edit
   if (res.ok) return { kind: "ok" };
   const data = (await res.json().catch(() => ({}))) as { messaggio?: string };
   if (res.status === 401) return { kind: "auth" };
-  if (res.status === 400 || res.status === 404) return { kind: "error", message: data.messaggio ?? "Non posso salvare questa correzione." };
+  if (res.status === 400 || res.status === 404 || res.status === 409) {
+    return { kind: "error", message: data.messaggio ?? "Non posso salvare questa correzione." };
+  }
   return { kind: "retry" };
 }
 
@@ -138,5 +140,29 @@ export async function confirmItems(noteId: string, decisioni: Decision[]): Promi
   if (res.ok) return { kind: "ok", confermati: data.confermati ?? 0, scartati: data.scartati ?? 0 };
   if (res.status === 401) return { kind: "auth" };
   if (res.status >= 400 && res.status < 500) return { kind: "error", message: data.messaggio ?? "Non posso salvare queste scelte." };
+  return { kind: "retry" };
+}
+
+export type Risultato = { indice: number; tipo: "evento" | "promemoria"; esito: "creato" | "gia_creato" | "errore"; messaggio?: string };
+export type CommitResult =
+  | { kind: "ok"; risultati: Risultato[] }
+  | { kind: "auth" }
+  | { kind: "retry" }
+  | { kind: "error"; message: string };
+
+/** Chiede al server di creare in Outlook / To Do gli impegni confermati. Si può ripetere senza doppioni. */
+export async function commitNote(noteId: string): Promise<CommitResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/notes/${encodeURIComponent(noteId)}/commit`, { method: "POST", headers: auth });
+  } catch {
+    return { kind: "retry" };
+  }
+  const data = (await res.json().catch(() => ({}))) as { risultati?: Risultato[]; messaggio?: string };
+  if (res.ok && Array.isArray(data.risultati)) return { kind: "ok", risultati: data.risultati };
+  if (res.status === 401) return { kind: "auth" };
+  if (res.status >= 400 && res.status < 500) return { kind: "error", message: data.messaggio ?? "Non posso creare gli impegni." };
   return { kind: "retry" };
 }

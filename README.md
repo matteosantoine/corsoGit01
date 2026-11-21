@@ -31,5 +31,5 @@ Nel frontend imposta `VITE_API_URL=http://localhost:7071`.
 - [x] Fase B: trascrizione e cancellazione audio (testata con servizi simulati; da provare su Azure dopo il deploy)
 - [x] Fase C: estrazione e domande (risposta con pulsanti; vedi `docs/estrazione.md`)
 - [x] Fase D: contatti e conferma (vedi `docs/contatti-e-conferma.md`)
-- [ ] Fase E: creazione eventi e promemoria
+- [x] Fase E: creazione eventi e promemoria (vedi `docs/creazione-eventi.md`)
 - [ ] Fase F: schermate Oggi e Note

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, buildCalendar, isValidYmd, localParts, weekdayOf } from "./dates";
+import { addDays, addMinutesLocal, buildCalendar, isValidYmd, localParts, weekdayOf } from "./dates";
 
 // Sabato 21 novembre 2026, 09:30 a Roma (08:30 UTC)
 const NOW = new Date("2026-11-21T08:30:00Z");
@@ -39,4 +39,10 @@ describe("buildCalendar", () => {
   it("giovedì tra due settimane = 3/12", () => {
     expect(cal).toContain("- giovedì 2026-12-03 (tra due settimane)");
   });
+});
+
+describe("addMinutesLocal", () => {
+  it("somma nello stesso giorno", () => expect(addMinutesLocal("2026-11-26", "10:00", 60)).toEqual({ ymd: "2026-11-26", hm: "11:00" }));
+  it("attraversa la mezzanotte", () => expect(addMinutesLocal("2026-11-26", "23:30", 90)).toEqual({ ymd: "2026-11-27", hm: "01:00" }));
+  it("attraversa fine mese e anno", () => expect(addMinutesLocal("2026-12-31", "23:45", 30)).toEqual({ ymd: "2027-01-01", hm: "00:15" }));
 });

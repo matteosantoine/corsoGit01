@@ -1,5 +1,6 @@
 import { DefaultAzureCredential, ManagedIdentityCredential, OnBehalfOfCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
+import type { CommitDeps } from "./handlers/commit";
 import type { ConfirmDeps } from "./handlers/confirm";
 import type { EditTextDeps } from "./handlers/editText";
 import type { ExtractDeps } from "./handlers/extract";
@@ -8,6 +9,7 @@ import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
 import { createCosmosNotes } from "./services/notes";
 import { createOpenAiExtractor } from "./services/extractor";
+import { createGraphWriter } from "./services/graphWrite";
 import { createGraphPeople } from "./services/people";
 import { createSpeechClient } from "./services/speech";
 
@@ -17,8 +19,20 @@ const need = (name: string): string => {
   return v;
 };
 
-export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps;
+export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps;
 let cached: AllDeps | undefined;
+
+/** Flusso On-Behalf-Of: la "password" dell'app è un'asserzione dell'identità gestita (nessun segreto). */
+async function getGraphToken(userToken: string): Promise<string> {
+  const managed = new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID ?? "");
+  const obo = new OnBehalfOfCredential({
+    tenantId: need("ENTRA_TENANT_ID"),
+    clientId: need("ENTRA_API_CLIENT_ID"),
+    userAssertionToken: userToken,
+    getAssertion: async () => (await managed.getToken("api://AzureADTokenExchange/.default")).token,
+  });
+  return (await obo.getToken("https://graph.microsoft.com/.default")).token;
+}
 
 /** Dipendenze reali, create una volta sola (identità gestita in Azure, `az login` in locale). */
 export function getDeps(sink: (line: string) => void): AllDeps {
@@ -40,19 +54,9 @@ export function getDeps(sink: (line: string) => void): AllDeps {
       deployment: need("OPENAI_DEPLOYMENT"),
       getToken: async () => (await credential.getToken("https://cognitiveservices.azure.com/.default")).token,
     }),
-    people: createGraphPeople({
-      // Flusso On-Behalf-Of: la "password" dell'app è un'asserzione dell'identità gestita (nessun segreto).
-      getGraphToken: async (userToken) => {
-        const managed = new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID ?? "");
-        const obo = new OnBehalfOfCredential({
-          tenantId: need("ENTRA_TENANT_ID"),
-          clientId: need("ENTRA_API_CLIENT_ID"),
-          userAssertionToken: userToken,
-          getAssertion: async () => (await managed.getToken("api://AzureADTokenExchange/.default")).token,
-        });
-        return (await obo.getToken("https://graph.microsoft.com/.default")).token;
-      },
-    }),
+    people: createGraphPeople({ getGraphToken }),
+    calendar: createGraphWriter({ getGraphToken }),
+    reminderMin: Number(process.env.REMINDER_MIN) || 15,
     defaultDurationMin: Number(process.env.DEFAULT_DURATION_MIN) || 60,
     now: () => new Date(),
     newId: () => crypto.randomUUID(),

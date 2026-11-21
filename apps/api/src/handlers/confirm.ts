@@ -45,20 +45,23 @@ export async function handleConfirm(
   if (decisioni.length !== stored.length) {
     return fail(409, "impegni_cambiati", "Gli impegni sono cambiati. Ricarica e riprova.");
   }
-  // Un impegno già creato non si tocca più.
-  if (stored.some((s, i) => s.stato === "creato" && decisioni[i].stato !== "confermato")) {
+  // Un impegno già creato (o in corso di creazione) non si tocca più.
+  const locked = (s: Impegno) => s.stato === "creato" || s.stato === "in_creazione";
+  if (stored.some((s, i) => locked(s) && decisioni[i].stato !== "confermato")) {
     return fail(409, "gia_creato", "Un impegno è già stato creato e non si può cambiare.");
   }
 
   const today = localParts(deps.now()).ymd;
   const final: Impegno[] = [];
   for (const [i, d] of decisioni.entries()) {
+    if (locked(stored[i])) { final.push(stored[i]); continue; } // il testo del telefono non lo sovrascrive
     if (d.stato === "confermato") {
       const problem = confirmError(d.impegno, today);
       if (problem) return fail(400, "impegno_incompleto", `Impegno ${i + 1}: ${problem}`);
     }
-    // Se era già creato resta "creato": la conferma non lo rimette in coda.
-    final.push({ ...d.impegno, mancanti: [], stato: stored[i].stato === "creato" ? "creato" : d.stato });
+    // stato e tracce di creazione le decide il server: il telefono non può impostarli.
+    const { creazione: _ignorata, ...pulito } = d.impegno;
+    final.push({ ...pulito, mancanti: [], stato: d.stato });
   }
 
   try {

@@ -48,3 +48,12 @@ export function buildCalendar(now: Date, days = 35, tz: string = TZ): string {
     return `- ${WEEKDAYS_IT[weekdayOf(ymd)]} ${ymd} (${tag}${week})`;
   }).join("\n");
 }
+
+/** Somma minuti a data e ora "da calendario" (senza fuso): serve per calcolare la fine di un evento, anche oltre la mezzanotte. */
+export function addMinutesLocal(ymd: string, hm: string, minutes: number): { ymd: string; hm: string } {
+  const [y, mo, d] = ymd.split("-").map(Number);
+  const [h, mi] = hm.split(":").map(Number);
+  const t = new Date(Date.UTC(y, mo - 1, d, h, mi + minutes));
+  const iso = t.toISOString();
+  return { ymd: iso.slice(0, 10), hm: iso.slice(11, 16) };
+}

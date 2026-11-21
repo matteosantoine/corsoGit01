@@ -61,12 +61,25 @@ describe("handleConfirm", () => {
     const { call } = await setup([evento()]);
     expect((await call(dec(["confermato", evento()], ["confermato", promemoria()]))).status).toBe(409);
   });
-  it("un impegno già creato non torna indietro e resta 'creato'", async () => {
-    const creato = { ...evento(), stato: "creato" as const };
+  it("un impegno già creato non torna indietro, resta 'creato' e non si sovrascrive", async () => {
+    const creato = { ...evento(), stato: "creato" as const, creazione: { tipo: "evento" as const, id: "ev-1", iniziatoIl: "x", creatoIl: "y" } };
     const { call, notes } = await setup([creato]);
     expect((await call(dec(["scartato", evento()]))).status).toBe(409);
     expect((await call(dec(["confermato", evento({ oraInizio: "12:00" })]))).status).toBe(200);
     expect(notes.all[0].items![0].stato).toBe("creato");
+    expect(notes.all[0].items![0].oraInizio).toBe("10:00"); // la copia del telefono non sostituisce quella creata
+    expect(notes.all[0].items![0].creazione?.id).toBe("ev-1");
+  });
+  it("un impegno in creazione non si può scartare", async () => {
+    const { call } = await setup([{ ...evento(), stato: "in_creazione" as const }]);
+    expect((await call(dec(["scartato", evento()]))).status).toBe(409);
+  });
+  it("il telefono non può inventare lo stato di creazione", async () => {
+    const { call, notes } = await setup([evento()]);
+    const forged = { ...evento(), stato: "creato", creazione: { tipo: "evento", id: "falso", iniziatoIl: "x", creatoIl: "y" } };
+    await call(dec(["confermato", forged as unknown as Impegno]));
+    expect(notes.all[0].items![0].stato).toBe("confermato");
+    expect(notes.all[0].items![0].creazione).toBeUndefined();
   });
   it.each([[null], [{}], [{ decisioni: "x" }], [{ decisioni: [{ stato: "forse", impegno: {} }] }]])("corpo non valido %j → 400", async (body) => {
     const { call } = await setup();

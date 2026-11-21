@@ -29,7 +29,14 @@ export const InvitatoSchema = z.object({
   /** Nome con cui compare nei contatti, se è stato trovato lì. */
   nomeContatto: z.string().nullable(),
 });
-export const StatoImpegno = z.enum(["da_confermare", "confermato", "scartato", "creato"]);
+export const StatoImpegno = z.enum(["da_confermare", "confermato", "scartato", "in_creazione", "creato"]);
+/** Traccia della creazione in Outlook / To Do (la scrive solo il server). */
+export const CreazioneSchema = z.object({
+  tipo: z.enum(["evento", "task"]),
+  id: z.string().nullable(),
+  iniziatoIl: z.string(),
+  creatoIl: z.string().nullable(),
+});
 
 /** Impegno definitivo: validato, con l'elenco di ciò che manca calcolato dal codice. */
 export const ImpegnoSchema = z.object({
@@ -40,11 +47,13 @@ export const ImpegnoSchema = z.object({
   /** Compilati dalla fase "contatti" in poi (opzionali: l'estrazione non li produce). */
   invitati: z.array(InvitatoSchema).optional(),
   stato: StatoImpegno.optional(),
+  creazione: CreazioneSchema.optional(),
 });
 export const EstrazioneSchema = z.object({ items: z.array(ImpegnoSchema) });
 
 export type Invitato = z.infer<typeof InvitatoSchema>;
 export type StatoImpegno = z.infer<typeof StatoImpegno>;
+export type Creazione = z.infer<typeof CreazioneSchema>;
 export type ImpegnoModel = z.infer<typeof ImpegnoModelSchema>;
 export type Impegno = z.infer<typeof ImpegnoSchema>;
 export type Estrazione = z.infer<typeof EstrazioneSchema>;
