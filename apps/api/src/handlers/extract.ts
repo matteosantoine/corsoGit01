@@ -1,15 +1,16 @@
-import { normalizeItems, type Impegno } from "@impegni/shared";
+import { normalizeItems, withDefaults, type Impegno } from "@impegni/shared";
 import type { Verifier } from "../auth";
 import type { Log } from "../logger";
 import type { NotesRepo } from "../services/notes";
 import type { Extractor } from "../services/extractor";
+import type { SettingsRepo } from "../services/settings";
 
 export type ExtractDeps = {
   verify: Verifier;
   notes: Pick<NotesRepo, "get" | "saveItems">;
   extractor: Extractor;
   now: () => Date;
-  defaultDurationMin: number;
+  settings: Pick<SettingsRepo, "get">;
   log: Log;
 };
 
@@ -32,7 +33,8 @@ export async function handleExtract(
   const note = await deps.notes.get(userId, input.noteId).catch(() => null);
   if (!note) return fail(404, "nota_non_trovata", "Non trovo questa nota.");
 
-  const ctx = { now: deps.now(), defaultDurationMin: deps.defaultDurationMin };
+  const prefs = await deps.settings.get(userId).catch(() => withDefaults(undefined));
+  const ctx = { now: deps.now(), defaultDurationMin: prefs.durataMinuti };
   let items: Impegno[] | undefined;
   // Un secondo tentativo: capita che il modello risponda in modo malformato.
   for (let attempt = 1; attempt <= 2 && !items; attempt++) {
@@ -40,6 +42,7 @@ export async function handleExtract(
       items = normalizeItems(await deps.extractor.extract(note.text, ctx), {
         now: ctx.now,
         defaultDurationMin: ctx.defaultDurationMin,
+        defaultTeams: prefs.linkTeams,
       });
     } catch {
       deps.log("extract.errore", { noteId: note.id, code: `tentativo_${attempt}` });

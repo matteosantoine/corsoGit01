@@ -66,3 +66,23 @@ h1 { font-size: 2.2rem; margin: 0; } h2 { font-size: 1.2rem; margin: 0 0 .5rem; 
 .invitati { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .6rem; }
 .invitati legend { font-weight: 700; font-size: 1.1rem; margin-bottom: .4rem; }
 .invitato { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.shell { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg);
+  border-top: 2px solid var(--card); padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
+.tab { min-height: 64px; border: 0; background: none; color: var(--muted); font-size: .95rem; font-weight: 600; cursor: pointer; padding: 0 .25rem; }
+.tab.current { color: var(--brand); box-shadow: inset 0 4px 0 var(--brand); font-weight: 800; }
+.tab:focus-visible { outline: 4px solid var(--brand); outline-offset: -4px; }
+.h1 { font-size: 1.8rem; margin: 0; }
+.day { display: flex; flex-direction: column; gap: .6rem; }
+.day h2 { font-size: 1.25rem; margin: .5rem 0 0; }
+.day h2::first-letter { text-transform: uppercase; }
+.agenda .when { font-weight: 700; color: var(--brand); margin: 0; }
+.agenda h3 { margin: .15rem 0; } .agenda .meta { margin: 0; color: var(--muted); }
+.agenda.todo { border-left: 6px solid #c77700; }
+.chips { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
+.chip { border-radius: .6rem; padding: .4rem .6rem; background: var(--bg); border: 1px solid rgba(128,128,128,.4); }
+.chip.ok { border-color: #2e7d32; } .chip.attesa { border-color: #c77700; }
+.ok { color: #2e7d32; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .ok { color: #81c995; } }
+select { font: inherit; font-size: 1.2rem; min-height: 56px; border-radius: .75rem; border: 2px solid var(--muted); background: var(--bg); color: var(--fg); padding: 0 .5rem; }
+input[type="search"] { font-size: 1.3rem; min-height: 60px; padding: 0 .75rem; border-radius: .75rem; border: 2px solid var(--muted); background: var(--bg); color: var(--fg); }

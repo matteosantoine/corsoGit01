@@ -7,6 +7,7 @@ dopo conferma, crea eventi Outlook e promemoria To Do.
 - Registrazione app in Entra ID: `docs/registrazione-entra-id.md`
 - Deploy Azure: `docs/deploy.md`
 - Servizi e costi: `docs/costi-stimati.md`
+- Cosa fa ogni parte: `docs/estrazione.md`, `docs/contatti-e-conferma.md`, `docs/creazione-eventi.md`, `docs/schermate-e-impostazioni.md`
 
 ## Sviluppo locale
 ```bash
@@ -25,6 +26,11 @@ Per provare senza token Microsoft imposta `DEV_AUTH_BYPASS_USER` in `local.setti
 (solo sviluppo locale: non esiste nel Bicep e non va mai impostato in Azure).
 Nel frontend imposta `VITE_API_URL=http://localhost:7071`.
 
+## Installazione sul dispositivo (PWA)
+- **Android:** da Chrome o Edge, menu → *Installa app* / *Aggiungi a schermata Home*.
+- **Windows:** da Edge o Chrome, *Installa app* (icona nella barra dell'indirizzo): compare nel menu Start.
+- Funziona anche dal browser, senza installare. iOS escluso per scelta.
+
 ## Stato
 - [x] Fase 0: struttura repo, infrastruttura Bicep, guida Entra ID
 - [x] Fase A: login Microsoft, registrazione audio, coda offline, PWA installabile
@@ -32,4 +38,4 @@ Nel frontend imposta `VITE_API_URL=http://localhost:7071`.
 - [x] Fase C: estrazione e domande (risposta con pulsanti; vedi `docs/estrazione.md`)
 - [x] Fase D: contatti e conferma (vedi `docs/contatti-e-conferma.md`)
 - [x] Fase E: creazione eventi e promemoria (vedi `docs/creazione-eventi.md`)
-- [ ] Fase F: schermate Oggi e Note
+- [x] Fase F: schermate Oggi, Note e Impostazioni (vedi `docs/schermate-e-impostazioni.md`)

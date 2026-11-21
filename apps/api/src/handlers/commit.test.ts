@@ -4,6 +4,7 @@ import { AuthError } from "../auth";
 import { makeLog } from "../logger";
 import { GraphWriteError, type GraphWriter } from "../services/graphWrite";
 import { CLAIM_STALE_MS, createMemoryNotes } from "../services/notes";
+import { createMemorySettings } from "../services/settings";
 import { handleCommit, type CommitDeps, type Risultato } from "./commit";
 
 const NOW = new Date("2026-11-21T08:30:00Z");
@@ -31,7 +32,7 @@ async function setup(items: Impegno[], calendarOver: Partial<GraphWriter> = {}, 
   const calendar = fakeCalendar(calendarOver);
   const deps: CommitDeps = {
     verify: async () => ({ userId: "u1", token: "tok-utente" }), notes, calendar, now: () => NOW,
-    reminderMin: 15, defaultDurationMin: 60, log: makeLog((l) => lines.push(l)), ...depsOver,
+    settings: createMemorySettings(), log: makeLog((l) => lines.push(l)), ...depsOver,
   };
   const call = async () => {
     const out = await handleCommit(deps, { authorization: "Bearer x", noteId: "n1" });
@@ -122,6 +123,15 @@ describe("handleCommit", () => {
     const b = await setup([stuck(recent)]);
     expect((await b.call()).risultati[0].esito).toBe("errore");
     expect(b.calendar.createTask).not.toHaveBeenCalled();
+  });
+
+  it("usa le impostazioni dell'utente: anticipo e durata predefinita", async () => {
+    const settings = createMemorySettings({ u1: { durataMinuti: 30, anticipoMinuti: 60, linkTeams: true } });
+    const { call, calendar } = await setup([evento({ durataMinuti: null })], {}, { settings });
+    await call();
+    const payload = calendar.createEvent.mock.calls[0][1];
+    expect(payload.reminderMinutesBeforeStart).toBe(60);
+    expect(payload.end.dateTime).toBe("2026-11-26T10:30:00");
   });
 
   it("senza token Microsoft (modalità di sviluppo) → 503 e niente viene creato", async () => {

@@ -20,6 +20,21 @@ describe("computeMancanti", () => {
   });
 });
 
+describe("normalizeItems — link Teams predefinito", () => {
+  const t = { ...opts, defaultTeams: true };
+  it("aggiunge Teams a un incontro senza modalità né luogo", () => {
+    expect(normalizeItems([m({ modalita: null })], t)[0].modalita).toBe("teams");
+  });
+  it("non lo aggiunge se c'è un luogo o se l'utente ha detto 'presenza'", () => {
+    expect(normalizeItems([m({ modalita: null, luogo: "Sala A" })], t)[0].modalita).toBeNull();
+    expect(normalizeItems([m({ modalita: "presenza" })], t)[0].modalita).toBe("presenza");
+  });
+  it("disattivato: resta com'è; i promemoria non hanno mai Teams", () => {
+    expect(normalizeItems([m({ modalita: null })], { ...opts, defaultTeams: false })[0].modalita).toBeNull();
+    expect(normalizeItems([m({ tipo: "promemoria", modalita: null, partecipanti: [] })], t)[0].modalita).toBeNull();
+  });
+});
+
 describe("normalizeItems", () => {
   it("applica la durata predefinita agli eventi", () => {
     expect(normalizeItems([m()], opts)[0].durataMinuti).toBe(60);

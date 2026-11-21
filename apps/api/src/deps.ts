@@ -1,6 +1,9 @@
 import { DefaultAzureCredential, ManagedIdentityCredential, OnBehalfOfCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
 import type { CommitDeps } from "./handlers/commit";
+import type { NotesListDeps } from "./handlers/notesList";
+import type { SettingsDeps } from "./handlers/settings";
+import type { TodayDeps } from "./handlers/today";
 import type { ConfirmDeps } from "./handlers/confirm";
 import type { EditTextDeps } from "./handlers/editText";
 import type { ExtractDeps } from "./handlers/extract";
@@ -9,7 +12,9 @@ import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
 import { createCosmosNotes } from "./services/notes";
 import { createOpenAiExtractor } from "./services/extractor";
+import { createGraphAgenda } from "./services/graphRead";
 import { createGraphWriter } from "./services/graphWrite";
+import { createCosmosSettings } from "./services/settings";
 import { createGraphPeople } from "./services/people";
 import { createSpeechClient } from "./services/speech";
 
@@ -19,7 +24,7 @@ const need = (name: string): string => {
   return v;
 };
 
-export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps;
+export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps & TodayDeps & NotesListDeps & SettingsDeps;
 let cached: AllDeps | undefined;
 
 /** Flusso On-Behalf-Of: la "password" dell'app è un'asserzione dell'identità gestita (nessun segreto). */
@@ -56,8 +61,8 @@ export function getDeps(sink: (line: string) => void): AllDeps {
     }),
     people: createGraphPeople({ getGraphToken }),
     calendar: createGraphWriter({ getGraphToken }),
-    reminderMin: Number(process.env.REMINDER_MIN) || 15,
-    defaultDurationMin: Number(process.env.DEFAULT_DURATION_MIN) || 60,
+    agenda: createGraphAgenda({ getGraphToken }),
+    settings: createCosmosSettings({ endpoint: need("COSMOS_ENDPOINT"), database: need("COSMOS_DATABASE"), credential }),
     now: () => new Date(),
     newId: () => crypto.randomUUID(),
     log: makeLog(sink),

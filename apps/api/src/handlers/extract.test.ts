@@ -4,6 +4,7 @@ import { AuthError } from "../auth";
 import { makeLog } from "../logger";
 import { createMemoryNotes } from "../services/notes";
 import { ExtractionError, type Extractor } from "../services/extractor";
+import { createMemorySettings } from "../services/settings";
 import { handleExtract, type ExtractDeps } from "./extract";
 
 const model = (o: Partial<ImpegnoModel> = {}): ImpegnoModel => ({
@@ -20,7 +21,7 @@ async function setup(extract: Extractor["extract"], over: Partial<ExtractDeps> =
     verify: async () => ({ userId: "u1", token: null }),
     notes, extractor,
     now: () => new Date("2026-11-21T08:30:00Z"),
-    defaultDurationMin: 60,
+    settings: createMemorySettings(),
     log: makeLog((l) => lines.push(l)),
     ...over,
   };
@@ -37,6 +38,24 @@ describe("handleExtract", () => {
     expect(items[0].mancanti).toEqual([]);
     expect(notes.all[0].status).toBe("elaborata");
     expect(notes.all[0].items).toHaveLength(1);
+  });
+
+  it("applica le impostazioni: durata predefinita e link Teams", async () => {
+    const settings = createMemorySettings({ u1: { durataMinuti: 90, anticipoMinuti: 15, linkTeams: true } });
+    const { call, extractor } = await setup(async () => [model({ modalita: null })], { settings });
+    const items = (await call()).json.items as { durataMinuti: number; modalita: string | null }[];
+    expect(items[0]).toMatchObject({ durataMinuti: 90, modalita: "teams" });
+    expect(extractor.extract.mock.calls[0][1].defaultDurationMin).toBe(90); // anche il modello la conosce
+  });
+  it("con Teams disattivato non lo aggiunge", async () => {
+    const settings = createMemorySettings({ u1: { durataMinuti: 60, anticipoMinuti: 15, linkTeams: false } });
+    const { call } = await setup(async () => [model({ modalita: null })], { settings });
+    expect(((await call()).json.items as { modalita: string | null }[])[0].modalita).toBeNull();
+  });
+  it("se le impostazioni non si leggono usa quelle predefinite", async () => {
+    const settings = { get: async () => { throw new Error("cosmos"); } };
+    const { call } = await setup(async () => [model({ modalita: null })], { settings });
+    expect(((await call()).json.items as { durataMinuti: number }[])[0].durataMinuti).toBe(60);
   });
 
   it("segnala come mancanti i dati che il modello non ha dato", async () => {

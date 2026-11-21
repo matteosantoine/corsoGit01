@@ -1,16 +1,16 @@
-import { confirmError, localParts, type Impegno } from "@impegni/shared";
+import { confirmError, localParts, withDefaults, type Impegno } from "@impegni/shared";
 import type { Verifier } from "../auth";
 import type { Log } from "../logger";
 import { GraphWriteError, buildEventPayload, buildTaskPayload, type GraphWriter } from "../services/graphWrite";
 import type { NotesRepo } from "../services/notes";
+import type { SettingsRepo } from "../services/settings";
 
 export type CommitDeps = {
   verify: Verifier;
   notes: Pick<NotesRepo, "get" | "claim" | "finish">;
   calendar: GraphWriter;
   now: () => Date;
-  reminderMin: number;
-  defaultDurationMin: number;
+  settings: Pick<SettingsRepo, "get">;
   log: Log;
 };
 
@@ -49,6 +49,7 @@ export async function handleCommit(
 
   const note = await deps.notes.get(user.userId, input.noteId).catch(() => null);
   if (!note) return fail(404, "nota_non_trovata", "Non trovo questa nota.");
+  const prefs = await deps.settings.get(user.userId).catch(() => withDefaults(undefined));
 
   const risultati: Risultato[] = [];
   const items = note.items ?? [];
@@ -73,7 +74,7 @@ export async function handleCommit(
     }
 
     try {
-      const ref = await create(deps, userToken, claimed, note.id, indice, now);
+      const ref = await create(deps, prefs, userToken, claimed, note.id, indice, now);
       await deps.notes.finish(user.userId, note.id, indice, { ok: true, tipo: tipo === "evento" ? "evento" : "task", id: ref.id }, now);
       deps.log("commit.ok", { noteId: note.id, step: tipo });
       risultati.push({ indice, tipo, esito: "creato" });
@@ -88,8 +89,8 @@ export async function handleCommit(
   return { status: 200, json: { noteId: note.id, risultati } };
 }
 
-function create(deps: CommitDeps, userToken: string, item: Impegno, noteId: string, index: number, now: Date) {
+function create(deps: CommitDeps, prefs: { anticipoMinuti: number; durataMinuti: number }, userToken: string, item: Impegno, noteId: string, index: number, now: Date) {
   return item.tipo === "evento"
-    ? deps.calendar.createEvent(userToken, buildEventPayload(item, { noteId, index, reminderMin: deps.reminderMin, defaultDurationMin: deps.defaultDurationMin }))
+    ? deps.calendar.createEvent(userToken, buildEventPayload(item, { noteId, index, reminderMin: prefs.anticipoMinuti, defaultDurationMin: prefs.durataMinuti }))
     : deps.calendar.createTask(userToken, buildTaskPayload(item, now));
 }

@@ -1,4 +1,4 @@
-import type { Impegno } from "@impegni/shared";
+import type { Impegno, Settings } from "@impegni/shared";
 import type { QueuedNote } from "../audio/queue";
 import type { SendResult } from "../audio/sync";
 import { getApiToken } from "../auth/AuthGate";
@@ -165,4 +165,72 @@ export async function commitNote(noteId: string): Promise<CommitResult> {
   if (res.status === 401) return { kind: "auth" };
   if (res.status >= 400 && res.status < 500) return { kind: "error", message: data.messaggio ?? "Non posso creare gli impegni." };
   return { kind: "retry" };
+}
+
+export type EventoOggi = { id: string; titolo: string; inizio: string | null; fine: string | null; luogo: string | null; teams: boolean; persone: number };
+export type PromemoriaOggi = { id: string; titolo: string; ora: string | null; importante: boolean };
+export type Giorno = { data: string; eventi: EventoOggi[]; promemoria: PromemoriaOggi[] };
+export type AgendaResult = { kind: "ok"; giorni: Giorno[] } | { kind: "auth" } | { kind: "error"; message: string };
+
+/** Impegni di oggi e domani, da Outlook e To Do. */
+export async function fetchAgenda(): Promise<AgendaResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  try {
+    const res = await fetch(`${API_URL}/api/today`, { headers: auth });
+    const data = (await res.json().catch(() => ({}))) as { giorni?: Giorno[]; messaggio?: string };
+    if (res.ok && Array.isArray(data.giorni)) return { kind: "ok", giorni: data.giorni };
+    if (res.status === 401) return { kind: "auth" };
+    return { kind: "error", message: data.messaggio ?? "Non riesco a leggere il calendario. Riprova." };
+  } catch {
+    return { kind: "error", message: "Non c'è connessione. Riprova tra poco." };
+  }
+}
+
+export type NoteImpegno = { titolo: string; tipo: "evento" | "promemoria"; stato: string; data: string | null; oraInizio: string | null };
+export type NoteSummary = { id: string; creatoIl: string; testo: string; impegni: NoteImpegno[] };
+export type NotesResult = { kind: "ok"; note: NoteSummary[]; altre: string | null } | { kind: "auth" } | { kind: "error"; message: string };
+
+/** Archivio delle note trascritte, con ricerca e paginazione. */
+export async function fetchNotes(opts: { q?: string; before?: string }): Promise<NotesResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  const params = new URLSearchParams();
+  if (opts.q) params.set("q", opts.q);
+  if (opts.before) params.set("before", opts.before);
+  try {
+    const res = await fetch(`${API_URL}/api/notes?${params}`, { headers: auth });
+    const data = (await res.json().catch(() => ({}))) as { note?: NoteSummary[]; altre?: string | null; messaggio?: string };
+    if (res.ok && Array.isArray(data.note)) return { kind: "ok", note: data.note, altre: data.altre ?? null };
+    if (res.status === 401) return { kind: "auth" };
+    return { kind: "error", message: data.messaggio ?? "Non riesco a leggere le note. Riprova." };
+  } catch {
+    return { kind: "error", message: "Non c'è connessione. Riprova tra poco." };
+  }
+}
+
+export type SettingsResult = { kind: "ok"; impostazioni: Settings } | { kind: "auth" } | { kind: "error"; message: string };
+
+export async function fetchSettings(): Promise<SettingsResult> {
+  return settingsCall("GET");
+}
+export async function saveSettings(s: Settings): Promise<SettingsResult> {
+  return settingsCall("PUT", s);
+}
+async function settingsCall(method: "GET" | "PUT", body?: Settings): Promise<SettingsResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  try {
+    const res = await fetch(`${API_URL}/api/settings`, {
+      method,
+      headers: { ...auth, ...(body ? { "Content-Type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = (await res.json().catch(() => ({}))) as { impostazioni?: Settings; messaggio?: string };
+    if (res.ok && data.impostazioni) return { kind: "ok", impostazioni: data.impostazioni };
+    if (res.status === 401) return { kind: "auth" };
+    return { kind: "error", message: data.messaggio ?? "Non riesco a leggere le impostazioni. Riprova." };
+  } catch {
+    return { kind: "error", message: "Non c'è connessione. Riprova tra poco." };
+  }
 }

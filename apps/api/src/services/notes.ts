@@ -37,6 +37,8 @@ export interface NotesRepo {
   claim(userId: string, id: string, index: number, now: Date): Promise<Impegno | null>;
   /** Chiude la prenotazione: "creato" con l'id esterno, oppure torna "confermato" per riprovare. */
   finish(userId: string, id: string, index: number, outcome: Outcome, now: Date): Promise<void>;
+  /** Archivio delle note dell'utente, dalla più recente. `q` cerca nel testo; `before` (data ISO) pagina. */
+  list(userId: string, opts: { q?: string; limit: number; before?: string }): Promise<NoteDoc[]>;
   /** Sostituisce il testo (correzione dell'utente) e scarta gli impegni già estratti, ormai superati. */
   updateText(userId: string, id: string, text: string): Promise<void>;
 }
@@ -61,6 +63,16 @@ export function createCosmosNotes(opts: {
       const { resource } = await item.read<NoteDoc>();
       if (!resource) throw new Error("nota non trovata");
       await item.replace({ ...resource, items, status: "elaborata" });
+    },
+    async list(userId, { q, limit, before }) {
+      const where = ["c.userId = @u"];
+      const parameters: { name: string; value: string | number }[] = [{ name: "@u", value: userId }, { name: "@n", value: limit }];
+      if (q) { where.push("CONTAINS(LOWER(c.text), @q)"); parameters.push({ name: "@q", value: q.toLowerCase() }); }
+      if (before) { where.push("c.createdAt < @b"); parameters.push({ name: "@b", value: before }); }
+      const { resources } = await container.items
+        .query<NoteDoc>({ query: `SELECT * FROM c WHERE ${where.join(" AND ")} ORDER BY c.createdAt DESC OFFSET 0 LIMIT @n`, parameters }, { partitionKey: userId })
+        .fetchAll();
+      return resources;
     },
     async claim(userId, id, index, now) {
       for (let attempt = 0; attempt < 4; attempt++) {
@@ -120,6 +132,12 @@ export function createMemoryNotes(): NotesRepo & { all: NoteDoc[] } {
       if (!n) throw new Error("nota non trovata");
       n.items = items;
       n.status = "elaborata";
+    },
+    async list(userId, { q, limit, before }) {
+      return all
+        .filter((n) => n.userId === userId && (!q || n.text.toLowerCase().includes(q.toLowerCase())) && (!before || n.createdAt < before))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, limit);
     },
     async claim(userId, id, index, now) {
       const n = all.find((x) => x.id === id && x.userId === userId);

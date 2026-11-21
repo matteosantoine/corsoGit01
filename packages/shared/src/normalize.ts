@@ -31,7 +31,7 @@ function cleanTime(raw: string | null): string | null {
  */
 export function normalizeItems(
   raw: ImpegnoModel[],
-  opts: { now: Date; defaultDurationMin: number },
+  opts: { now: Date; defaultDurationMin: number; defaultTeams?: boolean },
 ): Impegno[] {
   const today = localParts(opts.now);
   const seen = new Set<string>();
@@ -61,7 +61,8 @@ export function normalizeItems(
       data,
       oraInizio,
       durataMinuti: tipo === "evento" ? (r.durataMinuti ?? opts.defaultDurationMin) : null,
-      modalita: tipo === "evento" ? r.modalita : null,
+      // Incontro senza luogo né modalità detta: se l'utente lo vuole, per impostazione ha il link Teams.
+      modalita: tipo === "evento" ? (r.modalita ?? (opts.defaultTeams && !r.luogo?.trim() ? "teams" : null)) : null,
       luogo: r.luogo?.trim() || null,
       partecipanti,
       priorita: r.priorita,
