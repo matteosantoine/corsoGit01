@@ -8,6 +8,8 @@
     "COSMOS_ENDPOINT": "https://<account>.documents.azure.com:443/",
     "COSMOS_DATABASE": "impegni",
     "SPEECH_ENDPOINT": "https://<speech>.cognitiveservices.azure.com/",
+    "OPENAI_ENDPOINT": "https://<openai>.openai.azure.com/",
+    "OPENAI_DEPLOYMENT": "estrazione",
     "DEV_AUTH_BYPASS_USER": ""
   },
   "Host": { "CORS": "http://localhost:5173" }

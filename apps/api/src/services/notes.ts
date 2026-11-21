@@ -1,5 +1,6 @@
 import { CosmosClient } from "@azure/cosmos";
 import type { TokenCredential } from "@azure/identity";
+import type { Impegno } from "@impegni/shared";
 
 /** Una nota salvata: SOLO testo. Nessun campo per l'audio, per scelta. */
 export type NoteDoc = {
@@ -9,10 +10,14 @@ export type NoteDoc = {
   createdAt: string;
   durationSec: number;
   status: "nuova" | "elaborata";
+  /** Impegni estratti (testo e metadati, mai audio). */
+  items?: Impegno[];
 };
 
 export interface NotesRepo {
   create(note: NoteDoc): Promise<void>;
+  get(userId: string, id: string): Promise<NoteDoc | null>;
+  saveItems(userId: string, id: string, items: Impegno[]): Promise<void>;
 }
 
 export function createCosmosNotes(opts: {
@@ -26,10 +31,30 @@ export function createCosmosNotes(opts: {
     async create(note) {
       await container.items.create(note);
     },
+    async get(userId, id) {
+      const { resource } = await container.item(id, userId).read<NoteDoc>();
+      return resource ?? null;
+    },
+    async saveItems(userId, id, items) {
+      const item = container.item(id, userId);
+      const { resource } = await item.read<NoteDoc>();
+      if (!resource) throw new Error("nota non trovata");
+      await item.replace({ ...resource, items, status: "elaborata" });
+    },
   };
 }
 
 export function createMemoryNotes(): NotesRepo & { all: NoteDoc[] } {
   const all: NoteDoc[] = [];
-  return { all, async create(note) { all.push(note); } };
+  return {
+    all,
+    async create(note) { all.push(note); },
+    async get(userId, id) { return all.find((n) => n.id === id && n.userId === userId) ?? null; },
+    async saveItems(userId, id, items) {
+      const n = all.find((x) => x.id === id && x.userId === userId);
+      if (!n) throw new Error("nota non trovata");
+      n.items = items;
+      n.status = "elaborata";
+    },
+  };
 }

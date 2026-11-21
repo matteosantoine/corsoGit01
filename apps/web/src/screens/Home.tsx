@@ -3,7 +3,9 @@ import { microphoneErrorMessage, startRecording, type Recorder } from "../audio/
 import { toWav16kMono } from "../audio/convert";
 import { addToQueue, listQueue, removeFromQueue, type QueuedNote } from "../audio/queue";
 import { useOnline } from "../components/useOnline";
-import { isApiConfigured, sendNote } from "../api/client";
+import type { Impegno } from "@impegni/shared";
+import { extractNote, isApiConfigured, sendNote } from "../api/client";
+import { Review } from "../review/Review";
 import { syncQueue } from "../audio/sync";
 
 const MAX_SECONDS = 5 * 60; // limite per nota: tiene il file sotto il massimo accettato dal server
@@ -21,6 +23,8 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
   const [queue, setQueue] = useState<QueuedNote[]>([]);
   const [heard, setHeard] = useState<string[]>([]);
   const [info, setInfo] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Impegno[][]>([]);
+  const [thinking, setThinking] = useState(false);
   const [playing, setPlaying] = useState<{ id: string; url: string } | null>(null);
   const recorder = useRef<Recorder | null>(null);
   const timer = useRef<number | null>(null);
@@ -30,7 +34,17 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
   const sync = useCallback(async () => {
     if (!isApiConfigured || !navigator.onLine) return;
     const report = await syncQueue({ list: listQueue, remove: removeFromQueue, send: sendNote });
-    if (report.sent.length) setHeard((h) => [...report.sent.map((s) => s.text), ...h]);
+    if (report.sent.length) {
+      setHeard((h) => [...report.sent.map((s) => s.text), ...h]);
+      setThinking(true);
+      for (const sent of report.sent) {
+        const r = await extractNote(sent.noteId);
+        if (r.kind === "ok") setReviews((cur) => [...cur, r.items]);
+        else if (r.kind === "error") setInfo(r.message);
+        else setInfo("Non sono ancora riuscito a capire gli impegni. La nota è salvata: riprovo più tardi.");
+      }
+      setThinking(false);
+    }
     if (report.message) setInfo(report.message);
     if (report.stoppedForAuth) setInfo("Accesso scaduto. Esci e accedi di nuovo per inviare le note.");
     await refresh();
@@ -101,7 +115,11 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
         </p>
       )}
 
+      {reviews.length > 0 ? (
+        <Review key={reviews.length} initial={reviews[0]} onDone={() => setReviews((cur) => cur.slice(1))} />
+      ) : (
       <section className="center grow">
+        {thinking && <p className="lead" role="status">Sto capendo gli impegni…</p>}
         {phase === "recording" ? (
           <>
             <p className="timer" aria-live="off">{mmss(seconds)}</p>
@@ -119,6 +137,7 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
         {error && <p role="alert" className="error">{error}</p>}
         {info && <p role="status" className="notice">{info}</p>}
       </section>
+      )}
 
       {heard.length > 0 && (
         <section className="queue" aria-label="Note trascritte">

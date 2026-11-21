@@ -37,3 +37,15 @@ h1 { font-size: 2.2rem; margin: 0; } h2 { font-size: 1.2rem; margin: 0 0 .5rem; 
 .actions { display: flex; gap: .5rem; }
 @media (prefers-reduced-motion: no-preference) { .btn { transition: transform .1s; } .btn:active { transform: scale(.97); } }
 .heard { font-size: 1.1rem; margin: .25rem 0 .75rem; }
+.review { display: flex; flex-direction: column; gap: 1rem; flex: 1; }
+.review h2 { font-size: 1.6rem; margin: 0; }
+.question { font-size: 2rem; font-weight: 700; margin: .25rem 0 .5rem; }
+.tag { font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0; }
+.choices { display: flex; flex-direction: column; gap: .75rem; }
+.choices.grid { display: grid; grid-template-columns: 1fr 1fr; }
+.btn-choice { background: var(--card); color: var(--fg); border: 2px solid var(--brand); }
+.field { display: flex; flex-direction: column; gap: .35rem; font-size: 1.05rem; font-weight: 600; }
+.field.wide { grid-column: 1 / -1; }
+.field input { font-size: 1.4rem; min-height: 60px; padding: 0 .75rem; border-radius: .75rem; border: 2px solid var(--muted); background: var(--bg); color: var(--fg); }
+.card { background: var(--card); border-radius: 1rem; padding: 1rem; }
+.card h3 { margin: .25rem 0; font-size: 1.3rem; } .card p { margin: .2rem 0; }

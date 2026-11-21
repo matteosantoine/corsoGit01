@@ -8,7 +8,7 @@ export const MAX_AUDIO_BYTES = 12 * 1024 * 1024; // ~6 minuti di WAV 16 kHz mono
 export type Deps = {
   verify: Verifier;
   speech: SpeechClient;
-  notes: NotesRepo;
+  notes: Pick<NotesRepo, "create">;
   now: () => Date;
   newId: () => string;
   log: Log;

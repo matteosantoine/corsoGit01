@@ -1,8 +1,10 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
+import type { ExtractDeps } from "./handlers/extract";
 import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
 import { createCosmosNotes } from "./services/notes";
+import { createOpenAiExtractor } from "./services/extractor";
 import { createSpeechClient } from "./services/speech";
 
 const need = (name: string): string => {
@@ -11,10 +13,11 @@ const need = (name: string): string => {
   return v;
 };
 
-let cached: Deps | undefined;
+export type AllDeps = Deps & ExtractDeps;
+let cached: AllDeps | undefined;
 
 /** Dipendenze reali, create una volta sola (identità gestita in Azure, `az login` in locale). */
-export function getDeps(sink: (line: string) => void): Deps {
+export function getDeps(sink: (line: string) => void): AllDeps {
   if (cached) return cached;
   const credential = new DefaultAzureCredential({ managedIdentityClientId: process.env.AZURE_CLIENT_ID });
   cached = {
@@ -28,6 +31,12 @@ export function getDeps(sink: (line: string) => void): Deps {
       getToken: async () => (await credential.getToken("https://cognitiveservices.azure.com/.default")).token,
     }),
     notes: createCosmosNotes({ endpoint: need("COSMOS_ENDPOINT"), database: need("COSMOS_DATABASE"), credential }),
+    extractor: createOpenAiExtractor({
+      endpoint: need("OPENAI_ENDPOINT"),
+      deployment: need("OPENAI_DEPLOYMENT"),
+      getToken: async () => (await credential.getToken("https://cognitiveservices.azure.com/.default")).token,
+    }),
+    defaultDurationMin: Number(process.env.DEFAULT_DURATION_MIN) || 60,
     now: () => new Date(),
     newId: () => crypto.randomUUID(),
     log: makeLog(sink),

@@ -83,8 +83,7 @@ corsoGit01/
 │        └─ middleware/                # validazione token, logging sicuro
 ├─ packages/
 │  └─ shared/                          # tipi e schemi zod condivisi
-└─ tests/
-   └─ extraction/                      # frasi d'esempio italiane + risultati attesi
+(casi di prova dell'estrazione: apps/api/src/eval/cases.ts)
 ```
 
 ## 3. Modello dati dell'estrazione

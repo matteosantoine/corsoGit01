@@ -4,19 +4,22 @@
   "version": "0.1.0",
   "main": "dist/functions/*.js",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "esbuild src/functions/*.ts src/eval/run.ts --bundle --platform=node --target=node20 --format=cjs --outbase=src --outdir=dist --external:@azure/* --external:jose --sourcemap",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "eval": "npm run build && node dist/eval/run.js",
     "start": "npm run build && func start"
   },
   "dependencies": {
     "@azure/cosmos": "^4.1.1",
     "@azure/functions": "^4.5.1",
     "@azure/identity": "^4.4.1",
+    "@impegni/shared": "*",
     "jose": "^5.9.6"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
+    "esbuild": "^0.24.0",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"
   }

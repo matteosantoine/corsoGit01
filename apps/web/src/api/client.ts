@@ -1,3 +1,4 @@
+import type { Impegno } from "@impegni/shared";
 import type { QueuedNote } from "../audio/queue";
 import type { SendResult } from "../audio/sync";
 import { getApiToken } from "../auth/AuthGate";
@@ -8,17 +9,24 @@ const API_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 /** Sincronizzazione attiva solo se l'indirizzo dell'API è configurato. */
 export const isApiConfigured = API_URL !== "";
 
+/** Intestazione di accesso, o null se serve un nuovo login. */
+async function authHeader(): Promise<Record<string, string> | null> {
+  if (!isAuthConfigured) return {};
+  const token = await getApiToken();
+  return token ? { Authorization: `Bearer ${token}` } : null;
+}
+
 export async function sendNote(note: QueuedNote): Promise<SendResult> {
-  const headers: Record<string, string> = { "Content-Type": "audio/wav" };
-  if (isAuthConfigured) {
-    const token = await getApiToken();
-    if (!token) return { kind: "auth" };
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/transcribe`, { method: "POST", headers, body: note.audio });
+    res = await fetch(`${API_URL}/api/transcribe`, {
+      method: "POST",
+      headers: { "Content-Type": "audio/wav", ...auth },
+      body: note.audio,
+    });
   } catch {
     return { kind: "retry" }; // rete assente o instabile
   }
@@ -35,4 +43,27 @@ export async function sendNote(note: QueuedNote): Promise<SendResult> {
     return { kind: "reject", message: data.messaggio ?? "Questa registrazione non si può elaborare." };
   }
   return { kind: "retry" }; // 5xx e simili: riprova più tardi
+}
+
+export type ExtractResult =
+  | { kind: "ok"; items: Impegno[] }
+  | { kind: "retry" }
+  | { kind: "auth" }
+  | { kind: "error"; message: string };
+
+/** Chiede al server di estrarre gli impegni da una nota già trascritta. */
+export async function extractNote(noteId: string): Promise<ExtractResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/notes/${encodeURIComponent(noteId)}/extract`, { method: "POST", headers: auth });
+  } catch {
+    return { kind: "retry" };
+  }
+  const data = (await res.json().catch(() => ({}))) as { items?: Impegno[]; messaggio?: string };
+  if (res.ok && Array.isArray(data.items)) return { kind: "ok", items: data.items };
+  if (res.status === 401) return { kind: "auth" };
+  if (res.status === 404) return { kind: "error", message: data.messaggio ?? "Non trovo questa nota." };
+  return { kind: "retry" };
 }

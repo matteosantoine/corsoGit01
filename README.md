@@ -29,7 +29,7 @@ Nel frontend imposta `VITE_API_URL=http://localhost:7071`.
 - [x] Fase 0: struttura repo, infrastruttura Bicep, guida Entra ID
 - [x] Fase A: login Microsoft, registrazione audio, coda offline, PWA installabile
 - [x] Fase B: trascrizione e cancellazione audio (testata con servizi simulati; da provare su Azure dopo il deploy)
-- [ ] Fase C: estrazione e domande
+- [x] Fase C: estrazione e domande (risposta con pulsanti; vedi `docs/estrazione.md`)
 - [ ] Fase D: contatti e conferma
 - [ ] Fase E: creazione eventi e promemoria
 - [ ] Fase F: schermate Oggi e Note
