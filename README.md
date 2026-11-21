@@ -6,6 +6,7 @@ dopo conferma, crea eventi Outlook e promemoria To Do.
 - Proposta di architettura: `docs/proposta-architettura.md`
 - Registrazione app in Entra ID: `docs/registrazione-entra-id.md`
 - Deploy Azure: `docs/deploy.md`
+- Servizi e costi: `docs/costi-stimati.md`
 
 ## Sviluppo locale
 ```bash

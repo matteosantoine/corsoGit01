@@ -51,7 +51,7 @@ Stato: **approvata** (Functions + Static Web Apps + Bicep; solo Android e PC). F
 2. **Cancellazione audio anche in caso di errore.** Ordine fisso: trascrivi → salva il testo → il server conferma → il client cancella l'audio locale → solo dopo parte l'estrazione. Se l'estrazione fallisce, l'audio è già cancellato e il testo si può rielaborare.
 3. **Coda offline su iOS.** Safari può svuotare lo storage di una PWA non usata per settimane. Mostro sempre un avviso visibile "1 nota in attesa di invio".
 4. **Consenso amministratore.** I permessi Graph richiedono di solito il consenso dell'admin del tenant. L'accesso è ristretto al solo utente assegnato. La MFA è una policy di Conditional Access impostata dall'admin, non dal codice.
-5. **Regioni.** Italy North non offre tutti i servizi. Uso **West Europe** (o Sweden Central per Azure OpenAI se serve) con deployment di tipo EU Data Zone. Disponibilità e nome esatto del modello (GPT-4o-mini o successore) da verificare in fase di deploy.
+5. **Regioni.** Italy North non offre tutti i servizi. Tutto in **West Europe**, tranne Azure OpenAI in **Sweden Central** con deployment Standard regionale (verificato sul listino prezzi: per gpt-4o-mini non esiste il tier Data Zone e in West Europe c'è solo il globale). Nome e versione del modello da riconfermare al deploy.
 6. **Date relative.** Il modello riceve data, ora e fuso (Europe/Rome) correnti. Il backend ricontrolla le date: se una data risulta nel passato o incoerente, chiede conferma invece di indovinare.
 
 ## 2. Struttura delle cartelle

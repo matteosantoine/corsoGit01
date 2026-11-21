@@ -25,9 +25,11 @@ una identità gestita con i soli ruoli necessari. Chiavi locali disattivate dove
 (Cosmos, Speech, OpenAI, Storage): si accede solo con identità.
 
 ## Da verificare prima del deploy
-- **Modello OpenAI:** `gpt-4o-mini` versione `2024-07-18` con SKU `DataZoneStandard` deve essere
-  disponibile nella regione scelta (`openAiLocation`). Se il what-if o il deploy lo rifiuta, cambia regione
-  UE o modello (parametri `openAiLocation`, `openAiModelName`, `openAiModelVersion`).
+- **Modello OpenAI:** default `gpt-4o-mini` `2024-07-18`, deployment **Standard regionale** in `swedencentral`
+  (o `northeurope`): i dati restano in UE. Dal listino prezzi Azure risulta che per questo modello non
+  esiste un tier "Data Zone" e che in `westeurope` c'è solo quello globale (dati elaborabili fuori UE),
+  quindi non vanno usati. Se il deploy rifiuta il modello (ritiro/versione), cambia
+  `openAiModelName` / `openAiModelVersion` con un modello piccolo più recente disponibile nella regione.
 - **Quote:** l'abilitazione di Azure OpenAI può richiedere una richiesta di accesso nella sottoscrizione.
 - **Nomi:** `baseName` solo lettere minuscole e numeri.
 

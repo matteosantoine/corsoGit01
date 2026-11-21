@@ -4,7 +4,7 @@
   "parameters": {
     "baseName": { "value": "impegni" },
     "location": { "value": "westeurope" },
-    "openAiLocation": { "value": "westeurope" },
+    "openAiLocation": { "value": "swedencentral" },
     "apiClientId": { "value": "<CLIENT-ID-DELL-APP-ENTRA>" }
   }
 }

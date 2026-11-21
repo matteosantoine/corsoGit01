@@ -10,8 +10,9 @@ param baseName string
 @description('Regione principale (UE).')
 param location string = 'westeurope'
 
-@description('Regione dell\'account Azure OpenAI. Verifica la disponibilità del modello prima del deploy.')
-param openAiLocation string = 'westeurope'
+@description('Regione dell\'account Azure OpenAI. Deve essere UE con deployment "Standard" regionale: swedencentral o northeurope (in westeurope il listino pubblica solo il tier globale, dove i dati possono essere elaborati fuori UE).')
+@allowed(['swedencentral', 'northeurope'])
+param openAiLocation string = 'swedencentral'
 
 @description('Nome del modello OpenAI usato per estrarre gli impegni.')
 param openAiModelName string = 'gpt-4o-mini'
@@ -19,9 +20,9 @@ param openAiModelName string = 'gpt-4o-mini'
 @description('Versione del modello OpenAI.')
 param openAiModelVersion string = '2024-07-18'
 
-@description('SKU del deployment: DataZoneStandard mantiene i dati nell\'area UE.')
-@allowed(['DataZoneStandard', 'Standard'])
-param openAiDeploymentSku string = 'DataZoneStandard'
+@description('SKU del deployment. "Standard" = regionale: i dati restano nella regione UE scelta. NON usare GlobalStandard (elaborazione ovunque).')
+@allowed(['Standard', 'DataZoneStandard'])
+param openAiDeploymentSku string = 'Standard'
 
 @description('Capacità del deployment, in migliaia di token al minuto.')
 param openAiCapacity int = 10
