@@ -15,10 +15,19 @@ npm run dev                               # http://localhost:5173
 npm test && npm run typecheck && npm run build
 ```
 
+## Backend in locale
+```bash
+cp apps/api/local.settings.example.json apps/api/local.settings.json   # compila i valori
+npm run build -w apps/api && cd apps/api && func start                  # serve Azure Functions Core Tools
+```
+Per provare senza token Microsoft imposta `DEV_AUTH_BYPASS_USER` in `local.settings.json`
+(solo sviluppo locale: non esiste nel Bicep e non va mai impostato in Azure).
+Nel frontend imposta `VITE_API_URL=http://localhost:7071`.
+
 ## Stato
 - [x] Fase 0: struttura repo, infrastruttura Bicep, guida Entra ID
 - [x] Fase A: login Microsoft, registrazione audio, coda offline, PWA installabile
-- [ ] Fase B: trascrizione e cancellazione audio
+- [x] Fase B: trascrizione e cancellazione audio (testata con servizi simulati; da provare su Azure dopo il deploy)
 - [ ] Fase C: estrazione e domande
 - [ ] Fase D: contatti e conferma
 - [ ] Fase E: creazione eventi e promemoria

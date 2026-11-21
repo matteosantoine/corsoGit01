@@ -5,7 +5,7 @@ import {
   type AccountInfo,
 } from "@azure/msal-browser";
 import { MsalProvider, useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { isAuthConfigured, loginRequest, msalConfig } from "./config";
+import { apiScopes, isAuthConfigured, loginRequest, msalConfig } from "./config";
 
 const msal = new PublicClientApplication(msalConfig);
 
@@ -68,4 +68,15 @@ export function AuthGate({ children }: { children: (account: AccountInfo | null)
 
 export async function signOut() {
   await msal.logoutRedirect();
+}
+
+/** Token per chiamare il nostro backend. null = serve un nuovo accesso. */
+export async function getApiToken(): Promise<string | null> {
+  const account = msal.getAllAccounts()[0];
+  if (!account) return null;
+  try {
+    return (await msal.acquireTokenSilent({ scopes: apiScopes, account })).accessToken;
+  } catch {
+    return null;
+  }
 }

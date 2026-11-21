@@ -3,6 +3,10 @@ import { microphoneErrorMessage, startRecording, type Recorder } from "../audio/
 import { toWav16kMono } from "../audio/convert";
 import { addToQueue, listQueue, removeFromQueue, type QueuedNote } from "../audio/queue";
 import { useOnline } from "../components/useOnline";
+import { isApiConfigured, sendNote } from "../api/client";
+import { syncQueue } from "../audio/sync";
+
+const MAX_SECONDS = 5 * 60; // limite per nota: tiene il file sotto il massimo accettato dal server
 
 type Phase = "idle" | "recording" | "saving";
 
@@ -15,12 +19,28 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedNote[]>([]);
+  const [heard, setHeard] = useState<string[]>([]);
+  const [info, setInfo] = useState<string | null>(null);
   const [playing, setPlaying] = useState<{ id: string; url: string } | null>(null);
   const recorder = useRef<Recorder | null>(null);
   const timer = useRef<number | null>(null);
 
   const refresh = useCallback(() => listQueue().then(setQueue), []);
-  useEffect(() => { void refresh(); }, [refresh]);
+
+  const sync = useCallback(async () => {
+    if (!isApiConfigured || !navigator.onLine) return;
+    const report = await syncQueue({ list: listQueue, remove: removeFromQueue, send: sendNote });
+    if (report.sent.length) setHeard((h) => [...report.sent.map((s) => s.text), ...h]);
+    if (report.message) setInfo(report.message);
+    if (report.stoppedForAuth) setInfo("Accesso scaduto. Esci e accedi di nuovo per inviare le note.");
+    await refresh();
+  }, [refresh]);
+
+  useEffect(() => { void refresh().then(sync); }, [refresh, sync]);
+  useEffect(() => {
+    window.addEventListener("online", sync);
+    return () => window.removeEventListener("online", sync);
+  }, [sync]);
   useEffect(() => () => { if (timer.current) clearInterval(timer.current); recorder.current?.cancel(); }, []);
   useEffect(() => () => { if (playing) URL.revokeObjectURL(playing.url); }, [playing]);
 
@@ -37,6 +57,10 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
     timer.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
   }
 
+  useEffect(() => {
+    if (phase === "recording" && seconds >= MAX_SECONDS) void stop();
+  }, [phase, seconds]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function stop() {
     if (timer.current) clearInterval(timer.current);
     setPhase("saving");
@@ -45,6 +69,7 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
       const wav = await toWav16kMono(raw);
       await addToQueue(wav, seconds);
       await refresh();
+      void sync();
     } catch {
       setError("La registrazione non è andata a buon fine. Riprova.");
     } finally {
@@ -92,7 +117,15 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
           </>
         )}
         {error && <p role="alert" className="error">{error}</p>}
+        {info && <p role="status" className="notice">{info}</p>}
       </section>
+
+      {heard.length > 0 && (
+        <section className="queue" aria-label="Note trascritte">
+          <h2>Ho scritto così</h2>
+          {heard.map((t, i) => <p className="heard" key={i}>{t}</p>)}
+        </section>
+      )}
 
       {queue.length > 0 && (
         <section className="queue" aria-label="Note in attesa di invio">

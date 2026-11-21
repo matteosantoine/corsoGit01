@@ -36,3 +36,4 @@ h1 { font-size: 2.2rem; margin: 0; } h2 { font-size: 1.2rem; margin: 0 0 .5rem; 
 .queue-item audio { width: 100%; }
 .actions { display: flex; gap: .5rem; }
 @media (prefers-reduced-motion: no-preference) { .btn { transition: transform .1s; } .btn:active { transform: scale(.97); } }
+.heard { font-size: 1.1rem; margin: .25rem 0 .75rem; }

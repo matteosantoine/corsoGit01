@@ -15,4 +15,6 @@ export const msalConfig: Configuration = {
   cache: { cacheLocation: "localStorage" },
 };
 
-export const loginRequest = { scopes: ["User.Read"] };
+const apiScope = import.meta.env.VITE_API_SCOPE;
+export const apiScopes = apiScope ? [apiScope] : [];
+export const loginRequest = { scopes: apiScopes.length ? apiScopes : ["User.Read"] };
