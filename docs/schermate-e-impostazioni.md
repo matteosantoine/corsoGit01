@@ -15,7 +15,11 @@ Pulsante **Aggiorna**; si ricarica anche ogni volta che si apre la scheda.
 Archivio dei vocali trascritti (`GET /api/notes`): dal più recente, 20 per volta (**Mostra altre**),
 con **ricerca nel testo** (senza distinguere maiuscole). Sotto ogni nota, gli impegni che ne sono nati:
 *Nel calendario*, *In To Do*, *Scartato*, *Confermato, da creare*, *Non confermato*. Ognuno vede solo le sue note.
-Non c'è (ancora) la cancellazione di una nota: eventuale aggiunta se serve.
+**Elimina**: ogni nota ha il pulsante *Elimina* con richiesta di conferma ("Eliminare questa nota? Gli incontri e
+i promemoria già creati restano nel calendario e in To Do"). Il server cancella **definitivamente** il documento
+(`DELETE /api/notes/{id}`), solo se è dell'utente; mentre si sta creando un impegno la richiesta è rifiutata
+(riprova tra qualche istante). Eliminata dall'archivio, la nota sparisce anche dalla scheda *Registra*. Gli eventi
+e i promemoria già creati in Outlook / To Do **non** vengono toccati.
 
 ## Impostazioni (tre, con scelte pronte)
 | Impostazione | Scelte | Predefinito | Dove si usa |

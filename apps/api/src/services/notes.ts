@@ -39,6 +39,8 @@ export interface NotesRepo {
   finish(userId: string, id: string, index: number, outcome: Outcome, now: Date): Promise<void>;
   /** Archivio delle note dell'utente, dalla più recente. `q` cerca nel testo; `before` (data ISO) pagina. */
   list(userId: string, opts: { q?: string; limit: number; before?: string }): Promise<NoteDoc[]>;
+  /** Elimina definitivamente la nota. Restituisce false se non esiste. */
+  delete(userId: string, id: string): Promise<boolean>;
   /** Sostituisce il testo (correzione dell'utente) e scarta gli impegni già estratti, ormai superati. */
   updateText(userId: string, id: string, text: string): Promise<void>;
 }
@@ -63,6 +65,15 @@ export function createCosmosNotes(opts: {
       const { resource } = await item.read<NoteDoc>();
       if (!resource) throw new Error("nota non trovata");
       await item.replace({ ...resource, items, status: "elaborata" });
+    },
+    async delete(userId, id) {
+      try {
+        await container.item(id, userId).delete();
+        return true;
+      } catch (e) {
+        if ((e as { code?: number }).code === 404) return false;
+        throw e;
+      }
     },
     async list(userId, { q, limit, before }) {
       const where = ["c.userId = @u"];
@@ -132,6 +143,12 @@ export function createMemoryNotes(): NotesRepo & { all: NoteDoc[] } {
       if (!n) throw new Error("nota non trovata");
       n.items = items;
       n.status = "elaborata";
+    },
+    async delete(userId, id) {
+      const i = all.findIndex((n) => n.id === id && n.userId === userId);
+      if (i < 0) return false;
+      all.splice(i, 1);
+      return true;
     },
     async list(userId, { q, limit, before }) {
       return all

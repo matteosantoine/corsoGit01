@@ -234,3 +234,20 @@ async function settingsCall(method: "GET" | "PUT", body?: Settings): Promise<Set
     return { kind: "error", message: "Non c'è connessione. Riprova tra poco." };
   }
 }
+
+export type DeleteResult = { kind: "ok" } | { kind: "auth" } | { kind: "error"; message: string };
+
+/** Elimina definitivamente una nota (gli impegni già creati in Outlook/To Do restano). */
+export async function deleteNote(noteId: string): Promise<DeleteResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  try {
+    const res = await fetch(`${API_URL}/api/notes/${encodeURIComponent(noteId)}`, { method: "DELETE", headers: auth });
+    if (res.ok || res.status === 404) return { kind: "ok" }; // già eliminata: è lo stato voluto
+    if (res.status === 401) return { kind: "auth" };
+    const data = (await res.json().catch(() => ({}))) as { messaggio?: string };
+    return { kind: "error", message: data.messaggio ?? "Non sono riuscito a eliminare la nota. Riprova." };
+  } catch {
+    return { kind: "error", message: "Non c'è connessione. Riprova tra poco." };
+  }
+}

@@ -1,6 +1,7 @@
 import { DefaultAzureCredential, ManagedIdentityCredential, OnBehalfOfCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
 import type { CommitDeps } from "./handlers/commit";
+import type { DeleteNoteDeps } from "./handlers/deleteNote";
 import type { NotesListDeps } from "./handlers/notesList";
 import type { SettingsDeps } from "./handlers/settings";
 import type { TodayDeps } from "./handlers/today";
@@ -24,7 +25,7 @@ const need = (name: string): string => {
   return v;
 };
 
-export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps & TodayDeps & NotesListDeps & SettingsDeps;
+export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps & TodayDeps & NotesListDeps & SettingsDeps & DeleteNoteDeps;
 let cached: AllDeps | undefined;
 
 /** Flusso On-Behalf-Of: la "password" dell'app è un'asserzione dell'identità gestita (nessun segreto). */

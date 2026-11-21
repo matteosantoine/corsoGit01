@@ -16,7 +16,7 @@ type Phase = "idle" | "recording" | "saving";
 const mmss = (s: number) =>
   `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-export function Home({ userName, onSignOut }: { userName: string | null; onSignOut?: () => void }) {
+export function Home({ userName, onSignOut, deletedIds = [] }: { userName: string | null; onSignOut?: () => void; deletedIds?: string[] }) {
   const online = useOnline();
   const [phase, setPhase] = useState<Phase>("idle");
   const [seconds, setSeconds] = useState(0);
@@ -52,6 +52,13 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
   }, [refresh]);
 
   useEffect(() => { void refresh().then(sync); }, [refresh, sync]);
+
+  // Una nota eliminata dall'archivio sparisce anche da qui (testo e domande in corso).
+  useEffect(() => {
+    if (deletedIds.length === 0) return;
+    setHeard((h) => h.filter((x) => !deletedIds.includes(x.noteId)));
+    setReviews((r) => r.filter((x) => !deletedIds.includes(x.noteId)));
+  }, [deletedIds]);
   useEffect(() => {
     window.addEventListener("online", sync);
     return () => window.removeEventListener("online", sync);

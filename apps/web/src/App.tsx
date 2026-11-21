@@ -20,12 +20,13 @@ export default function App() {
 /** Quattro schede sempre visibili in basso. La scheda "Registra" resta attiva anche se si cambia pagina. */
 function Shell({ userName, signedIn }: { userName: string | null; signedIn: boolean }) {
   const [tab, setTab] = useState<Tab>("registra");
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const out = signedIn ? () => void signOut() : undefined;
   return (
     <div className="shell">
-      <div hidden={tab !== "registra"}><Home userName={userName} onSignOut={out} /></div>
+      <div hidden={tab !== "registra"}><Home userName={userName} onSignOut={out} deletedIds={deletedIds} /></div>
       <div hidden={tab !== "oggi"}><Today active={tab === "oggi"} /></div>
-      <div hidden={tab !== "note"}><Notes active={tab === "note"} /></div>
+      <div hidden={tab !== "note"}><Notes active={tab === "note"} onDeleted={(id) => setDeletedIds((d) => [...d, id])} /></div>
       <div hidden={tab !== "impostazioni"}><Settings active={tab === "impostazioni"} onSignOut={out} /></div>
 
       <nav className="tabs" aria-label="Sezioni">
