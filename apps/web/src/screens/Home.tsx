@@ -140,6 +140,7 @@ export function Home({ userName, onSignOut }: { userName: string | null; onSignO
       {reviews.length > 0 ? (
         <Review
           key={`${reviews[0].noteId}-${reviews[0].version}`}
+          noteId={reviews[0].noteId}
           initial={reviews[0].items}
           onDone={() => setReviews((cur) => cur.slice(1))}
         />

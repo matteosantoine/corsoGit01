@@ -14,7 +14,7 @@ async function setup(over: Partial<EditTextDeps> = {}) {
   const notes = createMemoryNotes();
   await notes.create({ id: "n1", userId: "u1", text: "Chiamare Maria", createdAt: "x", durationSec: 3, status: "elaborata", items: [item] });
   const lines: string[] = [];
-  const deps: EditTextDeps = { verify: async () => ({ userId: "u1" }), notes, log: makeLog((l) => lines.push(l)), ...over };
+  const deps: EditTextDeps = { verify: async () => ({ userId: "u1", token: null }), notes, log: makeLog((l) => lines.push(l)), ...over };
   return { notes, lines, deps, call: (text: unknown, id = "n1") => handleEditText(deps, { authorization: "Bearer x", noteId: id, text }) };
 }
 
@@ -41,8 +41,16 @@ describe("handleEditText", () => {
   it("nota di un altro utente o inesistente → 404 e nessuna modifica", async () => {
     const { call, deps, notes } = await setup();
     expect((await call("x", "altra")).status).toBe(404);
-    expect((await handleEditText({ ...deps, verify: async () => ({ userId: "intruso" }) }, { authorization: "x", noteId: "n1", text: "hack" })).status).toBe(404);
+    expect((await handleEditText({ ...deps, verify: async () => ({ userId: "intruso", token: null }) }, { authorization: "x", noteId: "n1", text: "hack" })).status).toBe(404);
     expect(notes.all[0].text).toBe("Chiamare Maria");
+  });
+  it("se un impegno è già stato creato, il testo non si può più cambiare", async () => {
+    const { call, notes } = await setup();
+    notes.all[0].items = [{ ...item, stato: "creato" }];
+    const out = await call("Chiamare Mario");
+    expect(out.status).toBe(409);
+    expect(notes.all[0].text).toBe("Chiamare Maria");
+    expect(notes.all[0].items![0].stato).toBe("creato");
   });
   it("senza accesso valido → 401", async () => {
     const { call } = await setup({ verify: async () => { throw new AuthError("x"); } });

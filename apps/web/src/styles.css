@@ -53,3 +53,16 @@ h1 { font-size: 2.2rem; margin: 0; } h2 { font-size: 1.2rem; margin: 0 0 .5rem; 
 .transcript:last-child { border-bottom: 0; }
 .field textarea { font: inherit; font-size: 1.2rem; line-height: 1.4; padding: .75rem; border-radius: .75rem; border: 2px solid var(--muted); background: var(--bg); color: var(--fg); resize: vertical; }
 .btn-primary.btn-small { background: var(--brand); color: #fff; }
+.person { display: flex; flex-direction: column; gap: .15rem; font-size: 1.15rem; }
+.person span, .person-btn span { font-weight: 400; font-size: 1rem; color: var(--muted); }
+.person-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .5rem 1rem; }
+.card.decided.confermato { border: 2px solid #2e7d32; }
+.card.decided.scartato { opacity: .7; }
+.actions.wrap { flex-wrap: wrap; }
+.edit { display: flex; flex-direction: column; gap: .75rem; }
+.edit select { font-size: 1.2rem; min-height: 56px; border-radius: .75rem; border: 2px solid var(--muted); background: var(--bg); color: var(--fg); padding: 0 .5rem; }
+.check { display: flex; align-items: center; gap: .6rem; font-size: 1.15rem; min-height: 48px; }
+.check input { width: 28px; height: 28px; }
+.invitati { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .6rem; }
+.invitati legend { font-weight: 700; font-size: 1.1rem; margin-bottom: .4rem; }
+.invitato { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }

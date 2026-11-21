@@ -1,11 +1,13 @@
 import { useState } from "react";
 import type { Impegno } from "@impegni/shared";
-import {
-  applyAnswer, describeWhen, nextQuestion, parseNames, QUESTION_TEXT, QUICK_TIMES, quickDates, todayLocal,
-} from "./questions";
+import { withInvitato } from "@impegni/shared";
+import { ConfirmStep } from "./ConfirmStep";
+import { ResolveStep } from "./ResolveStep";
+import { nextUnresolved } from "./resolve";
+import { applyAnswer, nextQuestion, parseNames, QUESTION_TEXT, QUICK_TIMES, quickDates, todayLocal } from "./questions";
 
-/** Fa le domande sui dati mancanti, una alla volta, poi mostra il riepilogo. */
-export function Review({ initial, onDone }: { initial: Impegno[]; onDone: () => void }) {
+/** Domande sui dati mancanti → scelta dei contatti → conferma, un passo alla volta. */
+export function Review({ noteId, initial, onDone }: { noteId: string; initial: Impegno[]; onDone: () => void }) {
   const [items, setItems] = useState(initial);
   const [names, setNames] = useState("");
   const q = nextQuestion(items);
@@ -17,22 +19,19 @@ export function Review({ initial, onDone }: { initial: Impegno[]; onDone: () => 
   };
 
   if (!q) {
-    return (
-      <section className="review" aria-label="Impegni pronti">
-        <h2>{items.length ? "Ho capito questo" : "Non ho trovato impegni"}</h2>
-        {items.map((it, i) => (
-          <article className="card" key={i}>
-            <p className="tag">{it.tipo === "evento" ? "Incontro" : "Promemoria"}</p>
-            <h3>{it.titolo}</h3>
-            <p>{describeWhen(it)}</p>
-            {it.partecipanti.length > 0 && <p>Con: {it.partecipanti.join(", ")}</p>}
-            {it.modalita === "teams" && <p>Su Teams</p>}
-            {it.luogo && <p>Luogo: {it.luogo}</p>}
-          </article>
-        ))}
-        <button className="btn btn-primary" onClick={onDone}>Ok</button>
-      </section>
-    );
+    const pending = nextUnresolved(items);
+    if (pending) {
+      return (
+        <ResolveStep
+          key={`${pending.index}-${pending.nome}`}
+          nome={pending.nome}
+          onChoose={(email, nomeContatto) =>
+            setItems((cur) => cur.map((it, i) => (i === pending.index ? withInvitato(it, { nome: pending.nome, email, nomeContatto }) : it)))
+          }
+        />
+      );
+    }
+    return <ConfirmStep noteId={noteId} initial={items} onDone={onDone} />;
   }
 
   const item = items[q.index];

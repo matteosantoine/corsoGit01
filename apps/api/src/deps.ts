@@ -1,11 +1,14 @@
-import { DefaultAzureCredential } from "@azure/identity";
+import { DefaultAzureCredential, ManagedIdentityCredential, OnBehalfOfCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
+import type { ConfirmDeps } from "./handlers/confirm";
 import type { EditTextDeps } from "./handlers/editText";
 import type { ExtractDeps } from "./handlers/extract";
+import type { PeopleDeps } from "./handlers/people";
 import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
 import { createCosmosNotes } from "./services/notes";
 import { createOpenAiExtractor } from "./services/extractor";
+import { createGraphPeople } from "./services/people";
 import { createSpeechClient } from "./services/speech";
 
 const need = (name: string): string => {
@@ -14,7 +17,7 @@ const need = (name: string): string => {
   return v;
 };
 
-export type AllDeps = Deps & ExtractDeps & EditTextDeps;
+export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps;
 let cached: AllDeps | undefined;
 
 /** Dipendenze reali, create una volta sola (identità gestita in Azure, `az login` in locale). */
@@ -36,6 +39,19 @@ export function getDeps(sink: (line: string) => void): AllDeps {
       endpoint: need("OPENAI_ENDPOINT"),
       deployment: need("OPENAI_DEPLOYMENT"),
       getToken: async () => (await credential.getToken("https://cognitiveservices.azure.com/.default")).token,
+    }),
+    people: createGraphPeople({
+      // Flusso On-Behalf-Of: la "password" dell'app è un'asserzione dell'identità gestita (nessun segreto).
+      getGraphToken: async (userToken) => {
+        const managed = new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID ?? "");
+        const obo = new OnBehalfOfCredential({
+          tenantId: need("ENTRA_TENANT_ID"),
+          clientId: need("ENTRA_API_CLIENT_ID"),
+          userAssertionToken: userToken,
+          getAssertion: async () => (await managed.getToken("api://AzureADTokenExchange/.default")).token,
+        });
+        return (await obo.getToken("https://graph.microsoft.com/.default")).token;
+      },
     }),
     defaultDurationMin: Number(process.env.DEFAULT_DURATION_MIN) || 60,
     now: () => new Date(),

@@ -33,6 +33,11 @@ export async function handleEditText(
   const note = await deps.notes.get(userId, input.noteId).catch(() => null);
   if (!note) return fail(404, "nota_non_trovata", "Non trovo questa nota.");
 
+  // Se qualcosa è già stato creato in Outlook/To Do, rifare gli impegni creerebbe doppioni.
+  if (note.items?.some((i) => i.stato === "creato")) {
+    return fail(409, "gia_creato", "Gli impegni di questa nota sono già stati creati: non si può più correggere il testo.");
+  }
+
   try {
     await deps.notes.updateText(userId, note.id, text);
   } catch {

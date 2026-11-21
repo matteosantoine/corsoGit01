@@ -90,3 +90,53 @@ export async function updateNoteText(noteId: string, text: string): Promise<Edit
   if (res.status === 400 || res.status === 404) return { kind: "error", message: data.messaggio ?? "Non posso salvare questa correzione." };
   return { kind: "retry" };
 }
+
+export type Candidate = { nome: string; email: string };
+export type PeopleResult =
+  | { kind: "ok"; candidati: Candidate[]; nonDisponibile: boolean }
+  | { kind: "auth" }
+  | { kind: "retry" };
+
+/** Cerca l'indirizzo email di un nome tra contatti e persone frequenti. */
+export async function findPeople(name: string): Promise<PeopleResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/people?q=${encodeURIComponent(name)}`, { headers: auth });
+  } catch {
+    return { kind: "retry" };
+  }
+  if (res.status === 401) return { kind: "auth" };
+  const data = (await res.json().catch(() => ({}))) as { candidati?: Candidate[]; nonDisponibile?: boolean };
+  if (!res.ok || !Array.isArray(data.candidati)) return { kind: "retry" };
+  return { kind: "ok", candidati: data.candidati, nonDisponibile: Boolean(data.nonDisponibile) };
+}
+
+export type Decision = { stato: "confermato" | "scartato"; impegno: Impegno };
+export type ConfirmResult =
+  | { kind: "ok"; confermati: number; scartati: number }
+  | { kind: "auth" }
+  | { kind: "retry" }
+  | { kind: "error"; message: string };
+
+/** Salva le scelte (Conferma / Scarta) sugli impegni di una nota. */
+export async function confirmItems(noteId: string, decisioni: Decision[]): Promise<ConfirmResult> {
+  const auth = await authHeader();
+  if (!auth) return { kind: "auth" };
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/notes/${encodeURIComponent(noteId)}/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ decisioni }),
+    });
+  } catch {
+    return { kind: "retry" };
+  }
+  const data = (await res.json().catch(() => ({}))) as { confermati?: number; scartati?: number; messaggio?: string };
+  if (res.ok) return { kind: "ok", confermati: data.confermati ?? 0, scartati: data.scartati ?? 0 };
+  if (res.status === 401) return { kind: "auth" };
+  if (res.status >= 400 && res.status < 500) return { kind: "error", message: data.messaggio ?? "Non posso salvare queste scelte." };
+  return { kind: "retry" };
+}

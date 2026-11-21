@@ -1,6 +1,7 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 
-export type AuthUser = { userId: string };
+/** `token` è il token Microsoft dell'utente (serve per chiamare Graph per suo conto); null nel bypass di sviluppo. */
+export type AuthUser = { userId: string; token: string | null };
 export type Verifier = (authorization: string | null) => Promise<AuthUser>;
 
 export class AuthError extends Error {}
@@ -20,7 +21,7 @@ export function createVerifier(opts: Options): Verifier {
     createRemoteJWKSet(new URL(`https://login.microsoftonline.com/${opts.tenantId}/discovery/v2.0/keys`));
 
   return async (authorization) => {
-    if (opts.devBypassUser) return { userId: opts.devBypassUser };
+    if (opts.devBypassUser) return { userId: opts.devBypassUser, token: null };
     const match = authorization?.match(/^Bearer (.+)$/i);
     if (!match) throw new AuthError("token mancante");
     try {
@@ -33,7 +34,7 @@ export function createVerifier(opts: Options): Verifier {
       if (payload.tid !== opts.tenantId) throw new AuthError("tenant non valido");
       const oid = payload.oid;
       if (typeof oid !== "string" || !oid) throw new AuthError("utente non valido");
-      return { userId: oid };
+      return { userId: oid, token: match[1] };
     } catch (e) {
       throw e instanceof AuthError ? e : new AuthError("token non valido");
     }

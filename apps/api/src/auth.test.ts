@@ -26,7 +26,8 @@ const verify = createVerifier({ tenantId: TENANT, clientId: CLIENT, getKey });
 
 describe("createVerifier", () => {
   it("accetta un token valido e restituisce l'oid", async () => {
-    expect(await verify(`Bearer ${await token()}`)).toEqual({ userId: "utente-1" });
+    const t = await token();
+    expect(await verify(`Bearer ${t}`)).toEqual({ userId: "utente-1", token: t });
   });
   it("accetta anche audience api://<client>", async () => {
     await expect(verify(`Bearer ${await token({}, { aud: `api://${CLIENT}` })}`)).resolves.toBeTruthy();
@@ -44,6 +45,6 @@ describe("createVerifier", () => {
   });
   it("bypass di sviluppo solo se esplicitamente impostato", async () => {
     const dev = createVerifier({ tenantId: TENANT, clientId: CLIENT, getKey, devBypassUser: "dev" });
-    expect(await dev(null)).toEqual({ userId: "dev" });
+    expect(await dev(null)).toEqual({ userId: "dev", token: null });
   });
 });

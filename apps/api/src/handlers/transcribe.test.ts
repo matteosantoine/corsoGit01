@@ -17,7 +17,7 @@ function setup(over: Partial<Deps> = {}) {
   const lines: string[] = [];
   const speech: SpeechClient = { transcribe: vi.fn(async () => ({ text: "Giovedì alle 10 chiamare Mario", durationMs: 4200 })) };
   const deps: Deps = {
-    verify: async () => ({ userId: "utente-1" }),
+    verify: async () => ({ userId: "utente-1", token: null }),
     speech,
     notes,
     now: () => new Date("2026-11-21T10:00:00Z"),

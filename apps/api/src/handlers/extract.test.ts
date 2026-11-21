@@ -17,7 +17,7 @@ async function setup(extract: Extractor["extract"], over: Partial<ExtractDeps> =
   const lines: string[] = [];
   const extractor = { extract: vi.fn(extract) } as Extractor & { extract: ReturnType<typeof vi.fn> };
   const deps: ExtractDeps = {
-    verify: async () => ({ userId: "u1" }),
+    verify: async () => ({ userId: "u1", token: null }),
     notes, extractor,
     now: () => new Date("2026-11-21T08:30:00Z"),
     defaultDurationMin: 60,
@@ -62,7 +62,7 @@ describe("handleExtract", () => {
   it("nota di un altro utente o inesistente → 404, il modello non viene chiamato", async () => {
     const { call, deps, extractor } = await setup(async () => [model()]);
     expect((await call("altra")).status).toBe(404);
-    expect((await handleExtract({ ...deps, verify: async () => ({ userId: "intruso" }) }, { authorization: "x", noteId: "n1" })).status).toBe(404);
+    expect((await handleExtract({ ...deps, verify: async () => ({ userId: "intruso", token: null }) }, { authorization: "x", noteId: "n1" })).status).toBe(404);
     expect(extractor.extract).not.toHaveBeenCalled();
   });
 
