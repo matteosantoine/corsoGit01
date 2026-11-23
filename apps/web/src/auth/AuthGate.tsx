@@ -48,7 +48,7 @@ export function AuthGate({ children }: { children: (account: AccountInfo | null)
 
   if (!isAuthConfigured) {
     // Solo in sviluppo locale si può provare l'app senza login.
-    if (import.meta.env.DEV) return <>{children(null)}</>;
+    if (import.meta.env.DEV || import.meta.env.VITE_DEMO === "1") return <>{children(null)}</>;
     return (
       <main className="screen center">
         <h1>Impegni</h1>

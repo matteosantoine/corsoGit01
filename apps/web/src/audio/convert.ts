@@ -7,6 +7,7 @@ export const TARGET_RATE = 16000;
  * WAV 16 kHz mono, il formato accettato da Azure AI Speech.
  */
 export async function toWav16kMono(blob: Blob): Promise<Blob> {
+  if (import.meta.env.VITE_DEMO === "1") return blob; // anteprima: è già un WAV
   const data = await blob.arrayBuffer();
   const ctx = new AudioContext();
   try {

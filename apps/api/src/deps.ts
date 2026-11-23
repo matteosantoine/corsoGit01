@@ -11,11 +11,11 @@ import type { ExtractDeps } from "./handlers/extract";
 import type { PeopleDeps } from "./handlers/people";
 import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
-import { createCosmosNotes } from "./services/notes";
+import { createCosmosNotes } from "./services/notes.cosmos";
 import { createOpenAiExtractor } from "./services/extractor";
 import { createGraphAgenda } from "./services/graphRead";
 import { createGraphWriter } from "./services/graphWrite";
-import { createCosmosSettings } from "./services/settings";
+import { createCosmosSettings } from "./services/settings.cosmos";
 import { createGraphPeople } from "./services/people";
 import { createSpeechClient } from "./services/speech";
 

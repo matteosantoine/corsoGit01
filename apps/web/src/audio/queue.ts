@@ -1,4 +1,12 @@
-import { del, get, keys, set } from "idb-keyval";
+import { del as idbDel, get as idbGet, keys as idbKeys, set as idbSet } from "idb-keyval";
+
+// Anteprima: coda in memoria (IndexedDB può non essere disponibile in una pagina incorporata).
+const demo = import.meta.env.VITE_DEMO === "1";
+const mem = new Map<string, unknown>();
+const set = async (k: string, v: unknown) => (demo ? void mem.set(k, v) : idbSet(k, v));
+const get = async <T>(k: IDBValidKey) => (demo ? (mem.get(String(k)) as T | undefined) : idbGet<T>(k));
+const del = async (k: string) => (demo ? void mem.delete(k) : idbDel(k));
+const keys = async () => (demo ? [...mem.keys()] : idbKeys());
 
 /**
  * Coda locale delle registrazioni in attesa di invio.

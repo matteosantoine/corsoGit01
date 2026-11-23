@@ -19,12 +19,12 @@ export interface AgendaReader {
   agenda(userToken: string, now: Date): Promise<Giorno[]>;
 }
 
-type GraphEvent = {
+export type GraphEvent = {
   id: string; subject?: string | null; isAllDay?: boolean; isCancelled?: boolean;
   start?: { dateTime?: string }; end?: { dateTime?: string };
   location?: { displayName?: string | null }; isOnlineMeeting?: boolean; attendees?: unknown[];
 };
-type GraphTask = {
+export type GraphTask = {
   id: string; title?: string | null; status?: string; importance?: string;
   dueDateTime?: { dateTime?: string }; reminderDateTime?: { dateTime?: string }; isReminderOn?: boolean;
 };

@@ -9,6 +9,9 @@ dopo conferma, crea eventi Outlook e promemoria To Do.
 - Servizi e costi: `docs/costi-stimati.md`
 - Cosa fa ogni parte: `docs/estrazione.md`, `docs/contatti-e-conferma.md`, `docs/creazione-eventi.md`, `docs/schermate-e-impostazioni.md`
 
+## Anteprima senza Azure
+`npm install && npm run demo` → http://localhost:5173 con tutto simulato nel browser (vedi `docs/anteprima.md`).
+
 ## Sviluppo locale
 ```bash
 npm install

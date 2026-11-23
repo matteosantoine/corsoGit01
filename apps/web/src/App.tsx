@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AuthGate, signOut } from "./auth/AuthGate";
 import { Home } from "./screens/Home";
 import { Notes } from "./screens/Notes";
 import { Settings } from "./screens/Settings";
 import { Today } from "./screens/Today";
+
+// Solo nella build di anteprima; nell'app vera questo ramo non esiste.
+const DemoBanner = import.meta.env.VITE_DEMO === "1" ? lazy(() => import("./demo/DemoBanner")) : null;
 
 type Tab = "registra" | "oggi" | "note" | "impostazioni";
 const TABS: { id: Tab; label: string }[] = [
@@ -24,6 +27,7 @@ function Shell({ userName, signedIn }: { userName: string | null; signedIn: bool
   const out = signedIn ? () => void signOut() : undefined;
   return (
     <div className="shell">
+      {DemoBanner && <Suspense fallback={null}><DemoBanner /></Suspense>}
       <div hidden={tab !== "registra"}><Home userName={userName} onSignOut={out} deletedIds={deletedIds} /></div>
       <div hidden={tab !== "oggi"}><Today active={tab === "oggi"} /></div>
       <div hidden={tab !== "note"}><Notes active={tab === "note"} onDeleted={(id) => setDeletedIds((d) => [...d, id])} /></div>

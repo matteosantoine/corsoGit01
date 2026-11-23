@@ -2,6 +2,7 @@ export type Recorder = { stop: () => Promise<Blob>; cancel: () => void };
 
 /** Avvia la registrazione dal microfono. Chiamare stop() per ottenere l'audio. */
 export async function startRecording(): Promise<Recorder> {
+  if (import.meta.env.VITE_DEMO === "1") return (await import("../demo/fakeRecorder")).fakeRecorder();
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, noiseSuppression: true },
   });

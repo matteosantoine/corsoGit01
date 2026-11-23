@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
@@ -25,5 +25,7 @@ export default defineConfig({
       },
     }),
   ],
+  // La build di anteprima è un solo file HTML: niente caricamenti separati.
+  build: mode === "demo" ? { rollupOptions: { output: { inlineDynamicImports: true } } } : undefined,
   test: { environment: "node" },
-});
+}));
