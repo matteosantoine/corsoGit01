@@ -126,7 +126,7 @@ describe("handleCommit", () => {
   });
 
   it("usa le impostazioni dell'utente: anticipo e durata predefinita", async () => {
-    const settings = createMemorySettings({ u1: { durataMinuti: 30, anticipoMinuti: 60, linkTeams: true } });
+    const settings = createMemorySettings({ u1: { durataMinuti: 30, anticipoMinuti: 60, linkTeams: true, conservazioneGiorni: 90 } });
     const { call, calendar } = await setup([evento({ durataMinuti: null })], {}, { settings });
     await call();
     const payload = calendar.createEvent.mock.calls[0][1];

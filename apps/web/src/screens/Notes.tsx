@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { deleteNote, fetchNotes, isApiConfigured, type NoteSummary } from "../api/client";
-import { noteWhen, statoLabel } from "./format";
+import { conservazioneLabel, noteWhen, statoLabel } from "./format";
 
 /** Archivio dei vocali trascritti: più recenti per primi, con ricerca nel testo. */
-export function Notes({ active, onDeleted }: { active: boolean; onDeleted?: (noteId: string) => void }) {
+export function Notes({ active, retention = null, onDeleted }: { active: boolean; retention?: number | null; onDeleted?: (noteId: string) => void }) {
   const [q, setQ] = useState("");
   const [note, setNote] = useState<NoteSummary[] | null>(null);
   const [altre, setAltre] = useState<string | null>(null);
@@ -61,6 +61,7 @@ export function Notes({ active, onDeleted }: { active: boolean; onDeleted?: (not
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" placeholder="Per esempio: Mario" />
       </label>
 
+      {retention && <p className="hint">Le note si eliminano da sole dopo {conservazioneLabel(retention)}. Gli incontri e i promemoria già creati restano nel calendario.</p>}
       {error && <p role="alert" className="error">{error}</p>}
       {loading && !note && <p className="lead" role="status">Carico le note…</p>}
       {note && note.length === 0 && !loading && (

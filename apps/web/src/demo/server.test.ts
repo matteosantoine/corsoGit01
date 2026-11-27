@@ -72,8 +72,8 @@ describe("anteprima: percorso completo sul finto server (gestori veri)", () => {
 
   it("impostazioni: salva e rilegge", async () => {
     const { call } = setup("x");
-    await call("PUT", "/api/settings", { durataMinuti: 90, anticipoMinuti: 30, linkTeams: false });
-    expect((await call("GET", "/api/settings")).json).toEqual({ impostazioni: { durataMinuti: 90, anticipoMinuti: 30, linkTeams: false } });
+    await call("PUT", "/api/settings", { durataMinuti: 90, anticipoMinuti: 30, linkTeams: false, conservazioneGiorni: 30 });
+    expect((await call("GET", "/api/settings")).json).toEqual({ impostazioni: { durataMinuti: 90, anticipoMinuti: 30, linkTeams: false, conservazioneGiorni: 30 } });
   });
 
   it("funzioni sconosciute → 404 comprensibile", async () => {

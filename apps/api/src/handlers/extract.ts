@@ -1,6 +1,7 @@
 import { normalizeItems, withDefaults, type Impegno } from "@impegni/shared";
 import type { Verifier } from "../auth";
 import type { Log } from "../logger";
+import { TOO_MANY, type RateLimitFn } from "../rateLimit";
 import type { NotesRepo } from "../services/notes";
 import type { Extractor } from "../services/extractor";
 import type { SettingsRepo } from "../services/settings";
@@ -12,6 +13,7 @@ export type ExtractDeps = {
   now: () => Date;
   settings: Pick<SettingsRepo, "get">;
   log: Log;
+  rateLimit?: RateLimitFn;
 };
 
 export type ExtractOutput = { status: number; json: Record<string, unknown> };
@@ -30,6 +32,7 @@ export async function handleExtract(
     return fail(401, "non_autorizzato", "Accesso scaduto. Accedi di nuovo.");
   }
 
+  if (deps.rateLimit && !deps.rateLimit(userId, "ai")) return { status: TOO_MANY.status, json: { ...TOO_MANY.json } };
   const note = await deps.notes.get(userId, input.noteId).catch(() => null);
   if (!note) return fail(404, "nota_non_trovata", "Non trovo questa nota.");
 

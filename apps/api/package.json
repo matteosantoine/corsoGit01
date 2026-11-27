@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "main": "dist/functions/*.js",
   "scripts": {
-    "build": "esbuild src/functions/*.ts src/eval/run.ts --bundle --platform=node --target=node20 --format=cjs --outbase=src --outdir=dist --external:@azure/* --external:jose --sourcemap",
+    "build": "esbuild src/functions/*.ts src/eval/run.ts --bundle --platform=node --target=node22 --format=cjs --outbase=src --outdir=dist --external:@azure/* --external:jose --sourcemap",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "eval": "npm run build && node dist/eval/run.js",
@@ -16,12 +16,12 @@
     "@azure/identity": "^4.4.1",
     "@impegni/shared": "*",
     "jose": "^5.9.6",
-    "zod": "^3.23.8"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^20.16.11",
-    "esbuild": "^0.24.0",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.2",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.4"
+    "vitest": "^5.1.2"
   }
 }

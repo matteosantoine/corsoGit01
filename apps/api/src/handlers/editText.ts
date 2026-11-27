@@ -1,5 +1,6 @@
 import type { Verifier } from "../auth";
 import type { Log } from "../logger";
+import { TOO_MANY, type RateLimitFn } from "../rateLimit";
 import type { NotesRepo } from "../services/notes";
 
 export const MAX_TEXT_CHARS = 4000;
@@ -8,6 +9,7 @@ export type EditTextDeps = {
   verify: Verifier;
   notes: Pick<NotesRepo, "get" | "updateText">;
   log: Log;
+  rateLimit?: RateLimitFn;
 };
 
 export type EditTextOutput = { status: number; json: Record<string, unknown> };
@@ -26,6 +28,7 @@ export async function handleEditText(
     return fail(401, "non_autorizzato", "Accesso scaduto. Accedi di nuovo.");
   }
 
+  if (deps.rateLimit && !deps.rateLimit(userId, "scrittura")) return { status: TOO_MANY.status, json: { ...TOO_MANY.json } };
   const text = typeof input.text === "string" ? input.text.trim() : "";
   if (!text) return fail(400, "testo_vuoto", "Il testo non può essere vuoto.");
   if (text.length > MAX_TEXT_CHARS) return fail(400, "testo_troppo_lungo", "Il testo è troppo lungo. Accorcialo.");

@@ -41,4 +41,4 @@ Nel frontend imposta `VITE_API_URL=http://localhost:7071`.
 - [x] Fase C: estrazione e domande (risposta con pulsanti; vedi `docs/estrazione.md`)
 - [x] Fase D: contatti e conferma (vedi `docs/contatti-e-conferma.md`)
 - [x] Fase E: creazione eventi e promemoria (vedi `docs/creazione-eventi.md`)
-- [x] Fase F: schermate Oggi, Note e Impostazioni (vedi `docs/schermate-e-impostazioni.md`, `docs/privacy-dati.md`)
+- [x] Fase F: schermate Oggi, Note e Impostazioni (vedi `docs/schermate-e-impostazioni.md`, `docs/privacy-dati.md`, `docs/ai-act-privacy.md`, `docs/sicurezza.md`)

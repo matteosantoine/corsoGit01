@@ -1,6 +1,7 @@
 import { confirmError, localParts, withDefaults, type Impegno } from "@impegni/shared";
 import type { Verifier } from "../auth";
 import type { Log } from "../logger";
+import { TOO_MANY, type RateLimitFn } from "../rateLimit";
 import { GraphWriteError, buildEventPayload, buildTaskPayload, type GraphWriter } from "../services/graphWrite";
 import type { NotesRepo } from "../services/notes";
 import type { SettingsRepo } from "../services/settings";
@@ -12,6 +13,7 @@ export type CommitDeps = {
   now: () => Date;
   settings: Pick<SettingsRepo, "get">;
   log: Log;
+  rateLimit?: RateLimitFn;
 };
 
 export type Risultato = {
@@ -45,6 +47,7 @@ export async function handleCommit(
     return fail(401, "non_autorizzato", "Accesso scaduto. Accedi di nuovo.");
   }
   if (!user.token) return fail(503, "non_disponibile", "La creazione nel calendario non è disponibile in questa modalità.");
+  if (deps.rateLimit && !deps.rateLimit(user.userId, "scrittura")) return { status: TOO_MANY.status, json: { ...TOO_MANY.json } };
   const userToken = user.token;
 
   const note = await deps.notes.get(user.userId, input.noteId).catch(() => null);

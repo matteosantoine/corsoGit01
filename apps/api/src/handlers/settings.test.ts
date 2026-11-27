@@ -9,19 +9,19 @@ function setup(over: Partial<SettingsDeps> = {}) {
   const deps: SettingsDeps = { verify: async () => ({ userId: "u1", token: null }), settings, log: makeLog(() => {}), ...over };
   return { settings, deps };
 }
-const ok = { durataMinuti: 45, anticipoMinuti: 30, linkTeams: false };
+const ok = { durataMinuti: 45, anticipoMinuti: 30, linkTeams: false, conservazioneGiorni: 60 };
 
 describe("impostazioni", () => {
   it("senza nulla di salvato restituisce i valori predefiniti", async () => {
     const { deps } = setup();
-    expect((await handleGetSettings(deps, { authorization: "x" })).json).toEqual({ impostazioni: { durataMinuti: 60, anticipoMinuti: 15, linkTeams: true } });
+    expect((await handleGetSettings(deps, { authorization: "x" })).json).toEqual({ impostazioni: { durataMinuti: 60, anticipoMinuti: 15, linkTeams: true, conservazioneGiorni: 90 } });
   });
   it("salva e rilegge", async () => {
     const { deps } = setup();
     expect((await handlePutSettings(deps, { authorization: "x", body: ok })).status).toBe(200);
     expect((await handleGetSettings(deps, { authorization: "x" })).json).toEqual({ impostazioni: ok });
   });
-  it.each([[{ ...ok, durataMinuti: 50 }], [{ ...ok, linkTeams: "si" }], [{}], [null]])("rifiuta %j senza salvare", async (body) => {
+  it.each([[{ ...ok, durataMinuti: 50 }], [{ ...ok, linkTeams: "si" }], [{ ...ok, conservazioneGiorni: 0 }], [{ ...ok, conservazioneGiorni: 7 }], [{ durataMinuti: 45, anticipoMinuti: 30, linkTeams: false }], [{}], [null]])("rifiuta %j senza salvare", async (body) => {
     const { deps, settings } = setup();
     expect((await handlePutSettings(deps, { authorization: "x", body })).status).toBe(400);
     expect(settings.store.size).toBe(0);

@@ -40,8 +40,20 @@ describe("createVerifier", () => {
     ["tenant diverso", async () => `Bearer ${await token({ tid: "x" })}`],
     ["oid mancante", async () => `Bearer ${await token({ oid: undefined })}`],
     ["token spazzatura", async () => "Bearer abc.def.ghi"],
+    ["app chiamante diversa (azp)", async () => `Bearer ${await token({ azp: "altra-app" })}`],
+    ["token senza scadenza", async () => `Bearer ${await new SignJWT({ scp: "access", tid: TENANT, oid: "u" }).setProtectedHeader({ alg: "RS256" }).setIssuer(`https://login.microsoftonline.com/${TENANT}/v2.0`).setAudience(CLIENT).sign(privateKey)}`],
+    ["token scaduto", async () => `Bearer ${await new SignJWT({ scp: "access", tid: TENANT, oid: "u" }).setProtectedHeader({ alg: "RS256" }).setIssuer(`https://login.microsoftonline.com/${TENANT}/v2.0`).setAudience(CLIENT).setExpirationTime(Math.floor(Date.now() / 1000) - 60).sign(privateKey)}`],
+    ["algoritmo 'none' (token non firmato)", async () => {
+      const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
+      return `Bearer ${b64({ alg: "none", typ: "JWT" })}.${b64({ iss: `https://login.microsoftonline.com/${TENANT}/v2.0`, aud: CLIENT, exp: 4102444800, scp: "access", tid: TENANT, oid: "u" })}.`;
+    }],
+    ["algoritmo a chiave condivisa (HS256)", async () => `Bearer ${await new SignJWT({ scp: "access", tid: TENANT, oid: "u" }).setProtectedHeader({ alg: "HS256" }).setIssuer(`https://login.microsoftonline.com/${TENANT}/v2.0`).setAudience(CLIENT).setExpirationTime("5m").sign(new TextEncoder().encode("segreto-condiviso-di-almeno-32-caratteri!!"))}`],
+    ["header con schema sbagliato", async () => `Basic ${await token()}`],
   ])("rifiuta: %s", async (_n, build) => {
     await expect(verify(await build())).rejects.toBeInstanceOf(AuthError);
+  });
+  it("accetta l'app giusta nel claim azp", async () => {
+    await expect(verify(`Bearer ${await token({ azp: CLIENT })}`)).resolves.toBeTruthy();
   });
   it("bypass di sviluppo solo se esplicitamente impostato", async () => {
     const dev = createVerifier({ tenantId: TENANT, clientId: CLIENT, getKey, devBypassUser: "dev" });

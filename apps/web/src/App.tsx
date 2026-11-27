@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { fetchSettings, isApiConfigured } from "./api/client";
 import { AuthGate, signOut } from "./auth/AuthGate";
 import { Home } from "./screens/Home";
 import { Notes } from "./screens/Notes";
@@ -17,21 +18,30 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function App() {
-  return <AuthGate>{(account) => <Shell userName={account?.name ?? null} signedIn={Boolean(account)} />}</AuthGate>;
+  return (
+    <AuthGate>
+      {(account) => <Shell userName={account?.name ?? null} owner={account?.homeAccountId ?? "locale"} signedIn={Boolean(account)} />}
+    </AuthGate>
+  );
 }
 
 /** Quattro schede sempre visibili in basso. La scheda "Registra" resta attiva anche se si cambia pagina. */
-function Shell({ userName, signedIn }: { userName: string | null; signedIn: boolean }) {
+function Shell({ userName, owner, signedIn }: { userName: string | null; owner: string; signedIn: boolean }) {
   const [tab, setTab] = useState<Tab>("registra");
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [retention, setRetention] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isApiConfigured) return;
+    void fetchSettings().then((r) => { if (r.kind === "ok") setRetention(r.impostazioni.conservazioneGiorni); });
+  }, []);
   const out = signedIn ? () => void signOut() : undefined;
   return (
     <div className="shell">
       {DemoBanner && <Suspense fallback={null}><DemoBanner /></Suspense>}
-      <div hidden={tab !== "registra"}><Home userName={userName} onSignOut={out} deletedIds={deletedIds} /></div>
+      <div hidden={tab !== "registra"}><Home userName={userName} owner={owner} onSignOut={out} deletedIds={deletedIds} retention={retention} /></div>
       <div hidden={tab !== "oggi"}><Today active={tab === "oggi"} /></div>
-      <div hidden={tab !== "note"}><Notes active={tab === "note"} onDeleted={(id) => setDeletedIds((d) => [...d, id])} /></div>
-      <div hidden={tab !== "impostazioni"}><Settings active={tab === "impostazioni"} onSignOut={out} /></div>
+      <div hidden={tab !== "note"}><Notes active={tab === "note"} retention={retention} onDeleted={(id) => setDeletedIds((d) => [...d, id])} /></div>
+      <div hidden={tab !== "impostazioni"}><Settings active={tab === "impostazioni"} onSignOut={out} onSaved={(p) => setRetention(p.conservazioneGiorni)} /></div>
 
       <nav className="tabs" aria-label="Sezioni">
         {TABS.map((t) => (

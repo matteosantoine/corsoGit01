@@ -7,7 +7,7 @@ legale/DPO dell'agenzia.** Dove le fonti non erano chiare è scritto.
 | Dato | Cosa succede |
 |---|---|
 | **Audio** | Registrato sul telefono, inviato al server, trascritto **solo in memoria** (mai su disco, blob o database). Sul telefono viene cancellato appena il testo è salvato. Mai conservato. |
-| **Testo trascritto** | Salvato nel **database Cosmos DB dell'azienda** (regione UE, nel tenant), per l'archivio "Note". Si può **eliminare** nota per nota (cancellazione definitiva). |
+| **Testo trascritto** | Salvato nel **database Cosmos DB dell'azienda** (regione UE, nel tenant), per l'archivio "Note". **Eliminazione automatica** dopo 30-365 giorni (predefinito 90, scelta in Impostazioni) e **a mano** nota per nota (cancellazione definitiva). |
 | **Impegni, contatti, calendario** | Letti/scritti solo su Outlook e To Do dell'utente, con i suoi permessi. Nessuna copia altrove salvo titoli/date nelle note. |
 | **Log** | Solo codici e identificativi tecnici: mai testo, nomi, email, titoli (verificato dai test). |
 | **Chiavi/segreti** | Nessuno nel codice; accesso con identità gestita. |
@@ -40,4 +40,5 @@ o migliorare i modelli, né condivisi con OpenAI; per Speech, che i dati dei cli
    che copra questo uso.
 4. Fino ad allora, **non dettare dati particolarmente sensibili** (salute, dati giudiziari, credenziali, dati di
    clienti coperti da segreto): il testo passa comunque dal modello.
-5. Tenere l'**eliminazione delle note** come abitudine per ciò che non serve conservare.
+5. L'**eliminazione automatica** è già attiva (90 giorni); per ciò che non serve conservare si può usare anche l'eliminazione manuale.
+6. Valutazione complessiva AI Act e privacy: `docs/ai-act-privacy.md`. Controllo di sicurezza: `docs/sicurezza.md`.

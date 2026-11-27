@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayTitle, durataLabel, noteWhen, statoLabel, timeRange } from "./format";
+import { conservazioneLabel, dayTitle, durataLabel, noteWhen, statoLabel, timeRange } from "./format";
 
 describe("dayTitle", () => {
   it("oggi e domani", () => {
@@ -38,5 +38,11 @@ describe("statoLabel", () => {
 describe("durataLabel", () => {
   it("minuti e ore", () => {
     expect([15, 45, 60, 90, 120].map(durataLabel)).toEqual(["15 minuti", "45 minuti", "1 ora", "1 ora e 30 minuti", "2 ore"]);
+  });
+});
+
+describe("conservazioneLabel", () => {
+  it("giorni, e un anno per 365", () => {
+    expect([30, 60, 90, 180, 365].map(conservazioneLabel)).toEqual(["30 giorni", "60 giorni", "90 giorni", "180 giorni", "1 anno"]);
   });
 });

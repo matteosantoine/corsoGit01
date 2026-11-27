@@ -24,6 +24,13 @@ Azure OpenAI (modello piccolo, deployment `estrazione`), Key Vault, Application 
 una identità gestita con i soli ruoli necessari. Chiavi locali disattivate dove possibile
 (Cosmos, Speech, OpenAI, Storage): si accede solo con identità.
 
+## Sicurezza: da sapere al deploy
+- Il backend usa **Node 22**: verificare che Flex Consumption lo offra nella regione (`az functionapp list-flexconsumption-runtimes`).
+- `allowLocalhost` (parametro) è **falso** in produzione: non cambiarlo.
+- Dopo il deploy, sostituire in `apps/web/public/staticwebapp.config.json` il valore `https://*.azurewebsites.net` di `connect-src` con l'indirizzo esatto del backend (`apiUrl`).
+- Mai impostare `DEV_AUTH_BYPASS_USER` in Azure (l'app non partirebbe).
+- Dettagli: `docs/sicurezza.md`.
+
 ## Da verificare prima del deploy
 - **Modello OpenAI:** default `gpt-4o-mini` `2024-07-18`, deployment **Standard regionale** in `swedencentral`
   (o `northeurope`): i dati restano in UE. Dal listino prezzi Azure risulta che per questo modello non

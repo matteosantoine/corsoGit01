@@ -1,5 +1,6 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
 import { getDeps } from "../deps";
+import { reply } from "../http";
 import { handlePeople } from "../handlers/people";
 
 app.http("people", {
@@ -12,10 +13,10 @@ app.http("people", {
         authorization: req.headers.get("authorization"),
         query: req.query.get("q"),
       });
-      return { status: out.status, jsonBody: out.json };
+      return reply(out.status, out.json);
     } catch {
       ctx.error("people.errore_inatteso");
-      return { status: 500, jsonBody: { error: "errore", messaggio: "Qualcosa non ha funzionato. Riprova." } };
+      return reply(500, { error: "errore", messaggio: "Qualcosa non ha funzionato. Riprova." });
     }
   },
 });

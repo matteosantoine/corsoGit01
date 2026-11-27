@@ -43,5 +43,7 @@ REGOLE FONDAMENTALI
 }
 
 export function buildUserMessage(text: string): string {
-  return `Trascrizione:\n"""\n${text}\n"""`;
+  // La trascrizione sta tra tre virgolette: se ne contenesse, potrebbe "chiudere" il blocco e farsi passare per istruzioni.
+  const safe = text.replace(/"{3,}/g, "'''").replace(/\u0000/g, "");
+  return `Trascrizione:\n"""\n${safe}\n"""`;
 }

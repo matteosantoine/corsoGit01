@@ -1,5 +1,6 @@
 import type { Verifier } from "../auth";
 import type { Log } from "../logger";
+import { TOO_MANY, type RateLimitFn } from "../rateLimit";
 import type { NotesRepo } from "../services/notes";
 import { SpeechError, type SpeechClient } from "../services/speech";
 
@@ -12,6 +13,8 @@ export type Deps = {
   now: () => Date;
   newId: () => string;
   log: Log;
+  /** Limite di richieste per utente (facoltativo). */
+  rateLimit?: RateLimitFn;
 };
 
 export type Input = { authorization: string | null; contentType: string | null; body: ArrayBuffer };
@@ -36,6 +39,7 @@ export async function handleTranscribe(deps: Deps, input: Input): Promise<Output
     return fail(401, "non_autorizzato", "Accesso scaduto. Accedi di nuovo.");
   }
 
+  if (deps.rateLimit && !deps.rateLimit(userId, "audio")) return { status: TOO_MANY.status, json: { ...TOO_MANY.json } };
   const size = input.body.byteLength;
   if (size === 0) return fail(400, "audio_vuoto", "La registrazione è vuota. Riprova.");
   if (size > MAX_AUDIO_BYTES)

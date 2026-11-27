@@ -1,5 +1,7 @@
 import { DefaultAzureCredential, ManagedIdentityCredential, OnBehalfOfCredential } from "@azure/identity";
 import { createVerifier } from "./auth";
+import { resolveDevBypass } from "./config";
+import { createRateLimiter, DEFAULT_LIMITS } from "./rateLimit";
 import type { CommitDeps } from "./handlers/commit";
 import type { DeleteNoteDeps } from "./handlers/deleteNote";
 import type { NotesListDeps } from "./handlers/notesList";
@@ -9,6 +11,7 @@ import type { ConfirmDeps } from "./handlers/confirm";
 import type { EditTextDeps } from "./handlers/editText";
 import type { ExtractDeps } from "./handlers/extract";
 import type { PeopleDeps } from "./handlers/people";
+import type { PurgeDeps } from "./handlers/purge";
 import type { Deps } from "./handlers/transcribe";
 import { makeLog } from "./logger";
 import { createCosmosNotes } from "./services/notes.cosmos";
@@ -25,7 +28,7 @@ const need = (name: string): string => {
   return v;
 };
 
-export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps & TodayDeps & NotesListDeps & SettingsDeps & DeleteNoteDeps;
+export type AllDeps = Deps & ExtractDeps & EditTextDeps & PeopleDeps & ConfirmDeps & CommitDeps & TodayDeps & NotesListDeps & SettingsDeps & DeleteNoteDeps & PurgeDeps;
 let cached: AllDeps | undefined;
 
 /** Flusso On-Behalf-Of: la "password" dell'app è un'asserzione dell'identità gestita (nessun segreto). */
@@ -48,7 +51,7 @@ export function getDeps(sink: (line: string) => void): AllDeps {
     verify: createVerifier({
       tenantId: need("ENTRA_TENANT_ID"),
       clientId: need("ENTRA_API_CLIENT_ID"),
-      devBypassUser: process.env.DEV_AUTH_BYPASS_USER || undefined,
+      devBypassUser: resolveDevBypass(process.env), // errore all'avvio se impostato fuori dallo sviluppo locale
     }),
     speech: createSpeechClient({
       endpoint: need("SPEECH_ENDPOINT"),
@@ -64,6 +67,7 @@ export function getDeps(sink: (line: string) => void): AllDeps {
     calendar: createGraphWriter({ getGraphToken }),
     agenda: createGraphAgenda({ getGraphToken }),
     settings: createCosmosSettings({ endpoint: need("COSMOS_ENDPOINT"), database: need("COSMOS_DATABASE"), credential }),
+    rateLimit: createRateLimiter(DEFAULT_LIMITS),
     now: () => new Date(),
     newId: () => crypto.randomUUID(),
     log: makeLog(sink),

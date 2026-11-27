@@ -21,12 +21,15 @@ i promemoria già creati restano nel calendario e in To Do"). Il server cancella
 (riprova tra qualche istante). Eliminata dall'archivio, la nota sparisce anche dalla scheda *Registra*. Gli eventi
 e i promemoria già creati in Outlook / To Do **non** vengono toccati.
 
-## Impostazioni (tre, con scelte pronte)
+## Impostazioni (quattro, con scelte pronte)
 | Impostazione | Scelte | Predefinito | Dove si usa |
 |---|---|---|---|
 | Durata di un incontro se non detta | 15, 30, 45, 60, 90, 120 min | 60 | estrazione (la conosce anche il modello) e creazione |
 | Avviso prima di un incontro | all'ora, 5, 10, 15, 30 min, 1 ora, 1 giorno | 15 min | promemoria dell'evento in Outlook |
 | Link Teams agli incontri | sì / no | sì | incontri senza luogo né modalità detta ricevono il link Teams |
+| Elimina da sole le note dopo | 30, 60, 90, 180 giorni, 1 anno | 90 giorni | pulizia automatica notturna (non esiste "mai"); vale anche per le note già salvate; gli eventi e i promemoria già creati restano |
+
+In fondo alle Impostazioni c'è la sezione **Privacy e intelligenza artificiale** (cosa fa l'AI, che può sbagliare, cosa si conserva, di non dettare dati sensibili). Anche la schermata *Registra* ricorda di non dettare dati sensibili e dopo quanti giorni le note si eliminano.
 
 Salvate per utente (`GET/PUT /api/settings`); valori non ammessi rifiutati dal server; se la lettura fallisce
 l'app usa i predefiniti. Cambiare un'impostazione vale per le note **successive**, non modifica impegni già creati.

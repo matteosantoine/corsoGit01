@@ -33,6 +33,9 @@ param tenantId string = tenant().tenantId
 @description('Client ID dell\'app registrata in Entra ID (vedi docs/registrazione-entra-id.md).')
 param apiClientId string
 
+@description('Consente le chiamate da http://localhost:5173. SOLO per provare in sviluppo: in produzione lasciare false.')
+param allowLocalhost bool = false
+
 var suffix = uniqueString(resourceGroup().id, baseName)
 var tags = { app: 'impegni' }
 
@@ -94,6 +97,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
     capabilities: [{ name: 'EnableServerless' }]
     consistencyPolicy: { defaultConsistencyLevel: 'Session' }
     disableLocalAuth: true // solo accesso con identità, niente chiavi
+    disableKeyBasedMetadataWriteAccess: true // nemmeno le chiavi possono cambiare la struttura del database
     minimalTlsVersion: 'Tls12'
   }
 }
@@ -243,13 +247,13 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
         }
       }
       scaleAndConcurrency: { maximumInstanceCount: 10, instanceMemoryMB: 2048 }
-      runtime: { name: 'node', version: '20' }
+      runtime: { name: 'node', version: '22' }
     }
     siteConfig: {
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
       cors: {
-        allowedOrigins: ['https://${web.properties.defaultHostname}', 'http://localhost:5173']
+        allowedOrigins: concat(['https://${web.properties.defaultHostname}'], allowLocalhost ? ['http://localhost:5173'] : [])
       }
       appSettings: [
         { name: 'AzureWebJobsStorage__accountName', value: storage.name }
@@ -257,6 +261,7 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'AzureWebJobsStorage__clientId', value: identity.properties.clientId }
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
         { name: 'AZURE_CLIENT_ID', value: identity.properties.clientId } // identità gestita da usare
+        { name: 'FUNCTIONS_REQUEST_BODY_SIZE_LIMIT', value: '13631488' } // 13 MB: oltre non si legge nemmeno (audio massimo 12 MB)
         { name: 'ENTRA_TENANT_ID', value: tenantId }
         { name: 'ENTRA_API_CLIENT_ID', value: apiClientId }
         { name: 'KEY_VAULT_URI', value: vault.properties.vaultUri }

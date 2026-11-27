@@ -41,14 +41,14 @@ describe("handleExtract", () => {
   });
 
   it("applica le impostazioni: durata predefinita e link Teams", async () => {
-    const settings = createMemorySettings({ u1: { durataMinuti: 90, anticipoMinuti: 15, linkTeams: true } });
+    const settings = createMemorySettings({ u1: { durataMinuti: 90, anticipoMinuti: 15, linkTeams: true, conservazioneGiorni: 90 } });
     const { call, extractor } = await setup(async () => [model({ modalita: null })], { settings });
     const items = (await call()).json.items as { durataMinuti: number; modalita: string | null }[];
     expect(items[0]).toMatchObject({ durataMinuti: 90, modalita: "teams" });
     expect(extractor.extract.mock.calls[0][1].defaultDurationMin).toBe(90); // anche il modello la conosce
   });
   it("con Teams disattivato non lo aggiunge", async () => {
-    const settings = createMemorySettings({ u1: { durataMinuti: 60, anticipoMinuti: 15, linkTeams: false } });
+    const settings = createMemorySettings({ u1: { durataMinuti: 60, anticipoMinuti: 15, linkTeams: false, conservazioneGiorni: 90 } });
     const { call } = await setup(async () => [model({ modalita: null })], { settings });
     expect(((await call()).json.items as { modalita: string | null }[])[0].modalita).toBeNull();
   });

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { QueuedNote } from "./queue";
 import { syncQueue, type SendResult } from "./sync";
 
-const note = (id: string): QueuedNote => ({ id, createdAt: id, durationSec: 3, audio: new Blob(["x"]) });
+const note = (id: string): QueuedNote => ({ id, owner: "u", createdAt: id, durationSec: 3, audio: new Blob(["x"]) });
 
 function setup(ids: string[], results: Record<string, SendResult>) {
   const queue = new Map(ids.map((i) => [i, note(i)]));

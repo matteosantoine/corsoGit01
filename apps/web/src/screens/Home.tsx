@@ -3,6 +3,7 @@ import { microphoneErrorMessage, startRecording, type Recorder } from "../audio/
 import { toWav16kMono } from "../audio/convert";
 import { addToQueue, listQueue, removeFromQueue, type QueuedNote } from "../audio/queue";
 import { useOnline } from "../components/useOnline";
+import { conservazioneLabel } from "./format";
 import { extractNote, isApiConfigured, sendNote, updateNoteText } from "../api/client";
 import { Review } from "../review/Review";
 import { addReview, removeForNote, replaceForNote, type ReviewEntry } from "../review/queue";
@@ -16,7 +17,7 @@ type Phase = "idle" | "recording" | "saving";
 const mmss = (s: number) =>
   `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-export function Home({ userName, onSignOut, deletedIds = [] }: { userName: string | null; onSignOut?: () => void; deletedIds?: string[] }) {
+export function Home({ userName, owner, onSignOut, deletedIds = [], retention = null }: { userName: string | null; owner: string; onSignOut?: () => void; deletedIds?: string[]; retention?: number | null }) {
   const online = useOnline();
   const [phase, setPhase] = useState<Phase>("idle");
   const [seconds, setSeconds] = useState(0);
@@ -30,11 +31,11 @@ export function Home({ userName, onSignOut, deletedIds = [] }: { userName: strin
   const recorder = useRef<Recorder | null>(null);
   const timer = useRef<number | null>(null);
 
-  const refresh = useCallback(() => listQueue().then(setQueue), []);
+  const refresh = useCallback(() => listQueue(owner).then(setQueue), [owner]);
 
   const sync = useCallback(async () => {
     if (!isApiConfigured || !navigator.onLine) return;
-    const report = await syncQueue({ list: listQueue, remove: removeFromQueue, send: sendNote });
+    const report = await syncQueue({ list: () => listQueue(owner), remove: removeFromQueue, send: sendNote });
     if (report.sent.length) {
       setHeard((h) => [...report.sent.map((s) => ({ noteId: s.noteId, text: s.text })), ...h]);
       setThinking(true);
@@ -49,7 +50,7 @@ export function Home({ userName, onSignOut, deletedIds = [] }: { userName: strin
     if (report.message) setInfo(report.message);
     if (report.stoppedForAuth) setInfo("Accesso scaduto. Esci e accedi di nuovo per inviare le note.");
     await refresh();
-  }, [refresh]);
+  }, [refresh, owner]);
 
   useEffect(() => { void refresh().then(sync); }, [refresh, sync]);
 
@@ -89,7 +90,7 @@ export function Home({ userName, onSignOut, deletedIds = [] }: { userName: strin
     try {
       const raw = await recorder.current!.stop();
       const wav = await toWav16kMono(raw);
-      await addToQueue(wav, seconds);
+      await addToQueue(wav, seconds, owner);
       await refresh();
       void sync();
     } catch {
@@ -166,6 +167,10 @@ export function Home({ userName, onSignOut, deletedIds = [] }: { userName: strin
               {phase === "saving" ? "Salvo…" : "Registra"}
             </button>
             <p className="lead">Premi il pulsante e racconta cosa devi fare.</p>
+            <p className="privacy-note" role="note">
+              Non dettare dati sensibili (salute, password, segreti professionali).
+              {retention ? ` Le note si eliminano da sole dopo ${conservazioneLabel(retention)}.` : ""}
+            </p>
           </>
         )}
         {error && <p role="alert" className="error">{error}</p>}

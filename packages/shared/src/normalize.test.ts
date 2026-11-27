@@ -35,6 +35,25 @@ describe("normalizeItems — link Teams predefinito", () => {
   });
 });
 
+describe("normalizeItems — limiti sui contenuti", () => {
+  it("accorcia titolo, descrizione, luogo e nomi esagerati invece di fallire", () => {
+    const [i] = normalizeItems([m({ titolo: "T".repeat(500), descrizione: "D".repeat(5000), luogo: "L".repeat(500), partecipanti: ["N".repeat(300)] })], opts);
+    expect(i.titolo).toHaveLength(200);
+    expect(i.descrizione).toHaveLength(2000);
+    expect(i.luogo).toHaveLength(200);
+    expect(i.partecipanti[0]).toHaveLength(100);
+  });
+  it("al massimo 20 partecipanti (niente raffica di inviti)", () => {
+    const many = Array.from({ length: 80 }, (_, k) => `Persona${k}`);
+    expect(normalizeItems([m({ partecipanti: many })], opts)[0].partecipanti).toHaveLength(20);
+  });
+  it("durata assurda → quella predefinita", () => {
+    expect(normalizeItems([m({ durataMinuti: 99999 })], opts)[0].durataMinuti).toBe(60);
+    expect(normalizeItems([m({ durataMinuti: -5 })], opts)[0].durataMinuti).toBe(60);
+    expect(normalizeItems([m({ durataMinuti: 90 })], opts)[0].durataMinuti).toBe(90);
+  });
+});
+
 describe("normalizeItems", () => {
   it("applica la durata predefinita agli eventi", () => {
     expect(normalizeItems([m()], opts)[0].durataMinuti).toBe(60);

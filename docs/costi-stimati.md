@@ -28,7 +28,7 @@ Copilot **non serve** e non è incluso (né in Basic né in Premium): l'estrazio
 | **Azure OpenAI** `gpt-4o-mini` (estrazione) | a token, circa 0,00015 € / 1.000 token in ingresso e 0,0006 € / 1.000 in uscita | < 0,20 € |
 | **Azure Functions** (Flex Consumption) | a consumo; franchigia mensile gratuita di 250.000 esecuzioni e 100.000 GB-s | 0 € |
 | **Static Web Apps** (piano Free) | gratuito | 0 € |
-| **Cosmos DB** (serverless) | a richieste (circa 0,25 € per milione di unità) + 0,25 €/GB | < 0,05 € |
+| **Cosmos DB** (serverless): archivio note e impostazioni | **0,2738 € per milione di operazioni + 0,2244 € per GB al mese** (listino West Europe) | **< 0,03 €** (vedi sezione sul database) |
 | **Storage** (solo per il deploy delle Functions) | pochi centesimi | ~0,02 € |
 | **Application Insights / Log Analytics** | primi 5 GB/mese gratuiti, i log non hanno contenuti | 0 € |
 | **Key Vault** | circa 0,03 € ogni 10.000 operazioni (oggi quasi non usato) | ~0 € |
@@ -52,6 +52,28 @@ perché è promozionale e può scadere.
 Circa 1.500 token in ingresso (istruzioni + testo) e 300 in uscita per nota: ≈ 0,0004 € a nota.
 Anche con domande di chiarimento (doppio delle chiamate) restiamo sotto i 0,35 € per 400 note.
 
+## 3 bis. Il database nel dettaglio (dove stanno le note)
+
+**Dove sono salvate le note:** nel database Cosmos DB dell'azienda, in UE, **non sul telefono**. Per questo le stesse
+note si vedono da Android, da Windows e da qualsiasi browser dopo l'accesso. Sul dispositivo restano solo l'audio non
+ancora inviato (cancellato appena inviato) e l'accesso.
+
+**Cosa pesa:** ogni nota occupa circa 3 KB (testo, impegni, invitati); contando gli indici del database, circa 6 KB.
+**Cosa si paga:** lo spazio occupato e le operazioni (circa 140 "unità" per nota tra lettura, scrittura, conferma,
+creazione e visualizzazioni; stima mia: la verificherete in *Cost Management* dopo un mese).
+Prezzi (listino ufficiale, EUR, West Europe): **0,2738 € ogni milione di unità; 0,2244 € per GB al mese.**
+
+| Uso | Note/mese | Note conservate (90 gg) | Spazio | Costo mensile (90 gg) | Con conservazione 1 anno |
+|---|---|---|---|---|---|
+| Leggero | 60 | 180 | ~1 MB | **~0,003 €** | ~0,004 € |
+| Normale | 150 | 450 | ~3 MB | **~0,007 €** | ~0,008 € |
+| Intenso | 400 | 1.200 | ~7 MB | **~0,017 €** | ~0,022 € |
+
+**Quindi meno di 3 centesimi al mese in ogni caso:** per un solo utente il database costa praticamente nulla.
+Non c'è un costo minimo (modalità *serverless*) e l'eliminazione automatica mantiene lo spazio sempre piccolo.
+Le copie di sicurezza periodiche hanno costi a parte per gli eventuali extra (circa 0,10 €/GB al mese): irrilevanti a questi volumi.
+Se un giorno gli utenti diventassero decine, il costo cresce in proporzione ma resta nell'ordine di pochi euro.
+
 ## 4. Cosa ho verificato e cosa no
 
 **Verificato sul listino ufficiale Azure** (Retail Prices API, valuta EUR):
@@ -59,8 +81,10 @@ Anche con domande di chiarimento (doppio delle chiamate) restiamo sotto i 0,35 �
 - `gpt-4o-mini` esiste come tier **globale** (anche in West Europe) e **regionale** (es. Sweden Central,
   North Europe). **Non risulta un tier "Data Zone"** e **in West Europe non c'è il regionale**.
 
+**Dal listino ufficiale (aggiornato il 27/11/2026):** anche Cosmos DB serverless (0,2738 €/M unità; 0,2244 €/GB-mese).
+
 **Da fonti Microsoft ma senza cifra esatta** (le pagine prezzi mostrano segnaposto):
-Cosmos DB, Functions, Key Vault, Log Analytics. Ordini di grandezza e franchigie sono quelli pubblici
+Functions, Key Vault, Log Analytics. Ordini di grandezza e franchigie sono quelli pubblici
 di Microsoft; con questi volumi la somma resta comunque nell'ordine dei centesimi.
 
 **Non verificato:** la disponibilità attuale della versione `2024-07-18` di `gpt-4o-mini` per nuovi

@@ -5,6 +5,11 @@ export const CLAIM_STALE_MS = 10 * 60 * 1000;
 
 export type Outcome = { ok: true; tipo: "evento" | "task"; id: string } | { ok: false };
 
+/** Una nota con un impegno in creazione recente non va eliminata: serve ancora il suo stato. */
+export function hasCreationInProgress(items: Impegno[] | undefined, nowMs: number): boolean {
+  return Boolean(items?.some((i) => i.stato === "in_creazione" && nowMs - Date.parse(i.creazione?.iniziatoIl ?? "") <= CLAIM_STALE_MS));
+}
+
 /** Un impegno è prenotabile se è confermato, o se una creazione precedente è rimasta appesa. */
 export function isClaimable(item: Impegno | undefined, nowMs: number): boolean {
   if (!item) return false;
@@ -37,6 +42,13 @@ export interface NotesRepo {
   finish(userId: string, id: string, index: number, outcome: Outcome, now: Date): Promise<void>;
   /** Archivio delle note dell'utente, dalla più recente. `q` cerca nel testo; `before` (data ISO) pagina. */
   list(userId: string, opts: { q?: string; limit: number; before?: string }): Promise<NoteDoc[]>;
+  /** Utenti che hanno almeno una nota (serve alla pulizia automatica). */
+  userIds(): Promise<string[]>;
+  /**
+   * Elimina le note create prima di `cutoffIso`, tranne quelle con un impegno in creazione recente.
+   * Restituisce quante ne ha eliminate. Non tocca eventi e promemoria già creati in Outlook / To Do.
+   */
+  deleteOlderThan(userId: string, cutoffIso: string, now: Date): Promise<number>;
   /** Elimina definitivamente la nota. Restituisce false se non esiste. */
   delete(userId: string, id: string): Promise<boolean>;
   /** Sostituisce il testo (correzione dell'utente) e scarta gli impegni già estratti, ormai superati. */
@@ -54,6 +66,14 @@ export function createMemoryNotes(): NotesRepo & { all: NoteDoc[] } {
       if (!n) throw new Error("nota non trovata");
       n.items = items;
       n.status = "elaborata";
+    },
+    async userIds() {
+      return [...new Set(all.map((n) => n.userId))];
+    },
+    async deleteOlderThan(userId, cutoffIso, now) {
+      const doomed = all.filter((n) => n.userId === userId && n.createdAt < cutoffIso && !hasCreationInProgress(n.items, now.getTime()));
+      for (const n of doomed) all.splice(all.indexOf(n), 1);
+      return doomed.length;
     },
     async delete(userId, id) {
       const i = all.findIndex((n) => n.id === id && n.userId === userId);

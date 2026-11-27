@@ -46,3 +46,5 @@ export function durataLabel(m: number): string {
   const ore = h === 1 ? "1 ora" : `${h} ore`;
   return h === 0 ? `${m} minuti` : r === 0 ? ore : `${ore} e ${r} minuti`;
 }
+
+export const conservazioneLabel = (giorni: number) => (giorni === 365 ? "1 anno" : `${giorni} giorni`);

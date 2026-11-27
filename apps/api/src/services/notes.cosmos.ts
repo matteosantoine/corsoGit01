@@ -1,6 +1,19 @@
 import { CosmosClient } from "@azure/cosmos";
 import type { TokenCredential } from "@azure/identity";
-import { isClaimable, type NoteDoc, type NotesRepo } from "./notes";
+import { hasCreationInProgress, isClaimable, type NoteDoc, type NotesRepo } from "./notes";
+
+/**
+ * Interrogazione dell'archivio. Il testo scritto dall'utente (ricerca, cursore) entra SOLO come parametro:
+ * mai incollato nella stringa della query, così non può alterarla (niente iniezioni).
+ */
+export function buildListQuery(userId: string, o: { q?: string; limit: number; before?: string }) {
+  const where = ["c.userId = @u"];
+  const parameters: { name: string; value: string | number }[] = [{ name: "@u", value: userId }, { name: "@n", value: Number.isFinite(o.limit) ? Math.max(1, Math.min(100, Math.trunc(o.limit))) : 1 }];
+  if (o.q) { where.push("CONTAINS(LOWER(c.text), @q)"); parameters.push({ name: "@q", value: o.q.toLowerCase() }); }
+  if (o.before) { where.push("c.createdAt < @b"); parameters.push({ name: "@b", value: o.before }); }
+  return { query: `SELECT * FROM c WHERE ${where.join(" AND ")} ORDER BY c.createdAt DESC OFFSET 0 LIMIT @n`, parameters };
+}
+
 
 export function createCosmosNotes(opts: {
   endpoint: string;
@@ -32,15 +45,32 @@ export function createCosmosNotes(opts: {
         throw e;
       }
     },
-    async list(userId, { q, limit, before }) {
-      const where = ["c.userId = @u"];
-      const parameters: { name: string; value: string | number }[] = [{ name: "@u", value: userId }, { name: "@n", value: limit }];
-      if (q) { where.push("CONTAINS(LOWER(c.text), @q)"); parameters.push({ name: "@q", value: q.toLowerCase() }); }
-      if (before) { where.push("c.createdAt < @b"); parameters.push({ name: "@b", value: before }); }
-      const { resources } = await container.items
-        .query<NoteDoc>({ query: `SELECT * FROM c WHERE ${where.join(" AND ")} ORDER BY c.createdAt DESC OFFSET 0 LIMIT @n`, parameters }, { partitionKey: userId })
-        .fetchAll();
+    async list(userId, opts) {
+      const { resources } = await container.items.query<NoteDoc>(buildListQuery(userId, opts), { partitionKey: userId }).fetchAll();
       return resources;
+    },
+    async userIds() {
+      const { resources } = await container.items.query<string>("SELECT DISTINCT VALUE c.userId FROM c").fetchAll();
+      return resources;
+    },
+    async deleteOlderThan(userId, cutoffIso, now) {
+      const { resources } = await container.items
+        .query<Pick<NoteDoc, "id" | "items">>(
+          { query: "SELECT c.id, c.items FROM c WHERE c.userId = @u AND c.createdAt < @c", parameters: [{ name: "@u", value: userId }, { name: "@c", value: cutoffIso }] },
+          { partitionKey: userId },
+        )
+        .fetchAll();
+      let deleted = 0;
+      for (const n of resources) {
+        if (hasCreationInProgress(n.items, now.getTime())) continue;
+        try {
+          await container.item(n.id, userId).delete();
+          deleted++;
+        } catch (e) {
+          if ((e as { code?: number }).code !== 404) throw e; // già eliminata da altri: va bene
+        }
+      }
+      return deleted;
     },
     async claim(userId, id, index, now) {
       for (let attempt = 0; attempt < 4; attempt++) {

@@ -28,10 +28,15 @@ export function createVerifier(opts: Options): Verifier {
       const { payload } = await jwtVerify(match[1], getKey, {
         issuer: `https://login.microsoftonline.com/${opts.tenantId}/v2.0`,
         audience: [opts.clientId, `api://${opts.clientId}`],
+        // Solo RS256 (quello di Microsoft Entra): niente "none" né algoritmi a chiave condivisa.
+        algorithms: ["RS256"],
+        requiredClaims: ["exp", "oid", "scp"],
       });
       const scopes = String(payload.scp ?? "").split(" ");
       if (!scopes.includes("access")) throw new AuthError("scope mancante");
       if (payload.tid !== opts.tenantId) throw new AuthError("tenant non valido");
+      // Il token deve essere stato chiesto dalla nostra app (azp), non da un'altra app dello stesso tenant.
+      if (payload.azp !== undefined && payload.azp !== opts.clientId) throw new AuthError("app non valida");
       const oid = payload.oid;
       if (typeof oid !== "string" || !oid) throw new AuthError("utente non valido");
       return { userId: oid, token: match[1] };

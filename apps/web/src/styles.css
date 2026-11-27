@@ -99,3 +99,8 @@ input[type="search"] { font-size: 1.3rem; min-height: 60px; padding: 0 .75rem; b
 .demo-field select, .demo-input { flex: 1; min-width: 0; font: inherit; font-size: .95rem; min-height: 40px; border-radius: .5rem; border: 2px solid #8a6200; background: #fff; color: #111; padding: 0 .4rem; }
 .demo-input { width: 100%; }
 .demo-sentence { font-style: italic; }
+.hint { display: block; font-weight: 400; font-size: .9rem; color: var(--muted); margin: .15rem 0 0; }
+.privacy-note { font-size: .95rem; color: var(--muted); margin: 0; max-width: 28rem; text-align: center; }
+.privacy { background: var(--card); border-radius: 1rem; padding: 1rem; }
+.privacy h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+.privacy ul { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .5rem; font-size: .95rem; }
